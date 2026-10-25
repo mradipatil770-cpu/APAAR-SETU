@@ -1,351 +1,282 @@
-import React, { useState } from 'react';
+import React from 'react';
 
-export default function LandingPage({ onGoLogin, onExploreDirectory }) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeNoticeTab, setActiveNoticeTab] = useState('circulars');
-
-  const dignitaries = [
-    {
-      name: 'Shri Dharmendra Pradhan',
-      title: "Hon'ble Minister of Education",
-      sub: 'Ministry of Education, Government of India',
-      image: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&q=80&w=260',
-    },
-    {
-      name: 'Shri Ashwini Vaishnaw',
-      title: "Hon'ble Minister of Railways, Information & Broadcasting, and MeitY",
-      sub: 'Ministry of Electronics and Information Technology',
-      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=260',
-    },
-    {
-      name: 'Prof. T. G. Sitharam',
-      title: "Chairman, All India Council for Technical Education (AICTE)",
-      sub: 'Apex Advisory Body for Technical Education in India',
-      image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=260',
-    },
-  ];
-
-  const corePillars = [
-    {
-      id: 'pillar-1',
-      title: 'National Identity Integration',
-      subtitle: 'APAAR / ABC Registry Sync',
-      desc: 'Seamless ingestion and format validation for the 12-digit Automated Permanent Academic Account Registry (APAAR ID) under the One Nation, One Student ID initiative.',
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="gov-pillar-svg">
-          <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-          <circle cx="8.5" cy="7" r="4" />
-          <polyline points="17 11 19 13 23 9" />
-        </svg>
-      ),
-      tag: 'Identity Trust',
-    },
-    {
-      id: 'pillar-2',
-      title: 'AICTE Intake Compliance',
-      subtitle: 'Sanctioned Seat Protection',
-      desc: 'Rigorous mathematical reconciliation of enrolments against approved capacity per academic discipline, safeguarding against unauthorized over-admission.',
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="gov-pillar-svg">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-          <path d="m9 12 2 2 4-4" />
-        </svg>
-      ),
-      tag: 'Regulatory Rigour',
-    },
-    {
-      id: 'pillar-3',
-      title: 'Cross-Institution De-duplication',
-      subtitle: 'Zero-Knowledge Blind Indexing',
-      desc: 'National candidate detection flagging ghost enrolments and concurrent dual-admissions across multiple universities without exposing raw identity records.',
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="gov-pillar-svg">
-          <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
-          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-        </svg>
-      ),
-      tag: 'Anomaly AI',
-    },
-    {
-      id: 'pillar-4',
-      title: 'Controlled Academic Verification',
-      subtitle: 'Consent-Governed Records',
-      desc: 'Authorized workflow allowing corporate employers, research councils, and credential agencies to verify student status with verifiable institutional confirmation.',
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="gov-pillar-svg">
-          <circle cx="12" cy="12" r="10" />
-          <polyline points="12 6 12 12 14 14" />
-          <path d="m9 12 2 2 4-4" />
-        </svg>
-      ),
-      tag: 'Verifiable Auth',
-    },
-    {
-      id: 'pillar-5',
-      title: 'AES-256-GCM Vaulting',
-      subtitle: 'Cryptographic Privacy',
-      desc: 'Enterprise-grade envelope encryption at rest, column-level ciphertext storage, and HMAC-SHA-256 deterministic indexing compliant with national data standards.',
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="gov-pillar-svg">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-        </svg>
-      ),
-      tag: 'Data Sovereignty',
-    },
-  ];
-
-  const notices = [
-    {
-      date: '26 Oct 2026',
-      title: 'Mandatory Submission of APAAR ID Data for Academic Session 2026–27',
-      category: 'Circular',
-      dept: 'AICTE Bureau of Approvals & Academic Oversight',
-    },
-    {
-      date: '22 Oct 2026',
-      title: 'Guidelines for Supernumerary Intake (NRI, OCI, and Foreign National Quotas)',
-      category: 'Notification',
-      dept: 'Regulation & Policy Division',
-    },
-    {
-      date: '18 Oct 2026',
-      title: 'Advisory on Reconciliation of Cross-Institution Enrolment Discrepancies',
-      category: 'Advisory',
-      dept: 'Data Audits & Anomaly Taskforce',
-    },
-    {
-      date: '12 Oct 2026',
-      title: 'Release of APAARSetu v2.0 with Real-time Controlled Verification Support',
-      category: 'Technical Update',
-      dept: 'NIC / AICTE Platform Engineering',
-    },
-  ];
-
+export default function LandingPage({ onGoLogin, onExploreServices }) {
   return (
-    <div className="landing-container">
-      {/* 1. Official Hero Section */}
-      <section className="landing-hero" aria-label="Portal Introduction">
-        <div className="landing-hero-overlay" />
-        <div className="landing-hero-content">
-          <div className="landing-hero-badge">
-            <span className="landing-badge-dot" />
-            <span>AICTE Problem Statement 26263 • National Academic Architecture</span>
-          </div>
-
-          <h1 className="landing-hero-title">
-            Unified Framework for Student Enrolment & Academic Identity
-          </h1>
-
-          <p className="landing-hero-subtitle">
-            A state-of-the-art platform connecting technical institutions, AICTE regulatory authorities,
-            and authorized stakeholders to validate approved intake limits, ensure APAAR ID compliance,
-            prevent duplicate enrolments, and streamline academic verification.
-          </p>
-
-          <div className="landing-hero-actions">
-            <button className="gov-btn-primary landing-cta-btn" onClick={onGoLogin}>
-              <svg viewBox="0 0 20 20" fill="currentColor" className="gov-btn-icon">
-                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-              </svg>
-              <span>Sign In to Portal</span>
-            </button>
-            <button className="gov-btn-outline landing-cta-btn-alt" onClick={onGoLogin}>
-              <svg viewBox="0 0 20 20" fill="currentColor" className="gov-btn-icon">
-                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
-              </svg>
-              <span>Central AICTE Oversight</span>
-            </button>
-          </div>
-
-          {/* National Trust Highlights */}
-          <div className="landing-stat-strip">
-            <div className="landing-stat-item">
-              <span className="landing-stat-number">10,000+</span>
-              <span className="landing-stat-label">AICTE Institutions Covered</span>
+    <div className="portal-landing-page">
+      {/* 1. Compact Two-Column Institutional Introduction */}
+      <section className="portal-intro-section" aria-labelledby="intro-heading">
+        <div className="portal-intro-grid">
+          <div className="portal-intro-primary">
+            <div className="portal-kicker-strip">
+              <span>Technical Institutions Enrolment & Compliance Framework</span>
             </div>
-            <div className="landing-stat-sep" />
-            <div className="landing-stat-item">
-              <span className="landing-stat-number">100%</span>
-              <span className="landing-stat-label">Deterministic Privacy Shield</span>
-            </div>
-            <div className="landing-stat-sep" />
-            <div className="landing-stat-item">
-              <span className="landing-stat-number">24/7</span>
-              <span className="landing-stat-label">Real-time Intake Monitoring</span>
-            </div>
-            <div className="landing-stat-sep" />
-            <div className="landing-stat-item">
-              <span className="landing-stat-number">Zero</span>
-              <span className="landing-stat-label">Data Exposure Vulnerability</span>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* 2. Executive Leadership & Dignitaries Strip (Styled like NIC Government Portal) */}
-      <section className="gov-leadership-section">
-        <div className="gov-section-header-compact">
-          <h2 className="gov-section-heading">Apex Guidance & Leadership</h2>
-          <div className="gov-section-rule" />
-        </div>
-        <div className="gov-leadership-grid">
-          {dignitaries.map((person, idx) => (
-            <div key={idx} className="gov-leader-card">
-              <div className="gov-leader-avatar-wrap">
-                <div className="gov-leader-avatar-placeholder">
-                  <svg viewBox="0 0 24 24" fill="currentColor" className="gov-leader-svg-icon">
-                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                  </svg>
-                </div>
-              </div>
-              <div className="gov-leader-info">
-                <h3 className="gov-leader-name">{person.name}</h3>
-                <p className="gov-leader-title">{person.title}</p>
-                <span className="gov-leader-dept">{person.sub}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+            <h2 id="intro-heading" className="portal-intro-title">
+              APAAR ID-Based Student Data Management and Verification
+            </h2>
 
-      {/* 3. Core Architectural Capabilities (Cards as in NIC Offerings) */}
-      <section className="landing-pillars-section">
-        <div className="gov-section-header">
-          <span className="gov-section-tag">Key Offerings</span>
-          <h2 className="gov-section-heading">Platform Architecture & Capabilities</h2>
-          <p className="gov-section-sub">
-            Engineered specifically to solve AICTE Problem Statement 26263 with institutional multi-tenancy,
-            cryptographic integrity, and cross-university data reconciliation.
-          </p>
-        </div>
+            <p className="portal-intro-text">
+              APAARSetu provides technical institutions and regulatory bodies with a secure,
+              structured platform to submit student admission records, validate APAAR ID
+              structural formatting, monitor approved intake quotas, detect cross-registration
+              anomalies, and process authorized academic verification requests.
+            </p>
 
-        <div className="landing-pillars-grid">
-          {corePillars.map((pillar) => (
-            <div key={pillar.id} className="landing-pillar-card">
-              <div className="landing-pillar-top">
-                <div className="landing-pillar-icon">{pillar.icon}</div>
-                <span className="landing-pillar-tag">{pillar.tag}</span>
-              </div>
-              <h3 className="landing-pillar-title">{pillar.title}</h3>
-              <div className="landing-pillar-sub">{pillar.subtitle}</div>
-              <p className="landing-pillar-desc">{pillar.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* 4. Split Section: Latest Circulars/Notices and Academic Calendar Widget (From NIC Portal Screenshot) */}
-      <section className="gov-split-info-section">
-        <div className="gov-notices-container">
-          <div className="gov-split-header">
-            <h3 className="gov-split-title">What's New & Circulars</h3>
-            <div className="gov-notices-tabs">
+            <div className="portal-intro-actions">
               <button
-                className={`gov-tab-mini ${activeNoticeTab === 'circulars' ? 'active' : ''}`}
-                onClick={() => setActiveNoticeTab('circulars')}
+                type="button"
+                className="gov-btn gov-btn-primary"
+                onClick={onGoLogin}
               >
-                Circulars
-              </button>
-              <button
-                className={`gov-tab-mini ${activeNoticeTab === 'guidelines' ? 'active' : ''}`}
-                onClick={() => setActiveNoticeTab('guidelines')}
-              >
-                AICTE Guidelines
+                <svg viewBox="0 0 20 20" fill="currentColor" className="gov-btn-svg" aria-hidden="true">
+                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                </svg>
+                <span>Institutional & Central Portal Login</span>
               </button>
             </div>
           </div>
 
-          <div className="gov-notices-list">
-            {notices.map((n, i) => (
-              <div key={i} className="gov-notice-card">
-                <div className="gov-notice-date-box">
-                  <span className="gov-notice-day">{n.date.split(' ')[0]}</span>
-                  <span className="gov-notice-mo">{n.date.split(' ')[1]}</span>
-                </div>
-                <div className="gov-notice-content">
-                  <div className="gov-notice-meta">
-                    <span className="gov-notice-badge">{n.category}</span>
-                    <span className="gov-notice-dept">{n.dept}</span>
-                  </div>
-                  <h4 className="gov-notice-title">{n.title}</h4>
-                </div>
+          <aside className="portal-intro-aside" aria-label="Portal Access Information">
+            <div className="portal-access-card">
+              <h3 className="portal-access-heading">Access & Operational Status</h3>
+              <ul className="portal-access-list">
+                <li>
+                  <strong>Active Academic Cycle:</strong>
+                  <span>Session 2026–27 Reconciliation</span>
+                </li>
+                <li>
+                  <strong>Authorized Users:</strong>
+                  <span>Approved Technical Institutions & Central Regulatory Officers</span>
+                </li>
+                <li>
+                  <strong>Ingestion Protocol:</strong>
+                  <span>Deterministic Batch CSV Ingestion with Column-Level Encryption</span>
+                </li>
+                <li>
+                  <strong>Verification Architecture:</strong>
+                  <span>Controlled, Consent-Referenced Academic Validation</span>
+                </li>
+              </ul>
+              <div className="portal-access-footer">
+                <span className="portal-note-text">
+                  Accounts are provisioned through institutional nodal authorities.
+                </span>
               </div>
-            ))}
-          </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      {/* 2. Core Functional Capabilities (Corresponding strictly to working implementations) */}
+      <section className="portal-capabilities-section" aria-labelledby="capabilities-heading">
+        <div className="portal-section-header">
+          <h2 id="capabilities-heading" className="portal-section-title">
+            Core System Capabilities
+          </h2>
+          <p className="portal-section-desc">
+            Functional components currently implemented and operational within the APAARSetu platform.
+          </p>
         </div>
 
-        {/* Calendar & Compliance Milestones Widget */}
-        <div className="gov-calendar-container">
-          <div className="gov-split-header">
-            <h3 className="gov-split-title">Academic Schedule (Session 2026–27)</h3>
-            <span className="gov-month-tag">October 2026</span>
+        <div className="portal-capabilities-grid">
+          {/* Capability 1 */}
+          <article className="portal-capability-card">
+            <div className="portal-card-header">
+              <div className="portal-card-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+              </div>
+              <h3 className="portal-card-title">Batch Ingestion & Validation</h3>
+            </div>
+            <p className="portal-card-body">
+              Institutions submit student enrolment datasets via structured CSV format. The ingestion engine
+              validates mandatory headers, enforces the 12-digit numeric APAAR ID pattern, and calculates
+              SHA-256 file hashes to prevent redundant or corrupted submissions.
+            </p>
+          </article>
+
+          {/* Capability 2 */}
+          <article className="portal-capability-card">
+            <div className="portal-card-header">
+              <div className="portal-card-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  <path d="m9 12 2 2 4-4" />
+                </svg>
+              </div>
+              <h3 className="portal-card-title">Sanctioned Intake Reconciliation</h3>
+            </div>
+            <p className="portal-card-body">
+              Every admitted student batch is evaluated against approved annual intake limits by discipline
+              and academic year. Programmes exceeding approved quotas are flagged with detailed discrepancy
+              breakdowns for institutional administrative correction.
+            </p>
+          </article>
+
+          {/* Capability 3 */}
+          <article className="portal-capability-card">
+            <div className="portal-card-header">
+              <div className="portal-card-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+                  <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+                </svg>
+              </div>
+              <h3 className="portal-card-title">Zero-Knowledge Duplicate Detection</h3>
+            </div>
+            <p className="portal-card-body">
+              Candidate detection identifies potential dual-enrolment collisions across multiple institutions
+              using deterministic HMAC-SHA-256 blind indexing. Discrepancies are surfaced for administrative review
+              without transmitting or exposing plaintext identifiers.
+            </p>
+          </article>
+
+          {/* Capability 4 */}
+          <article className="portal-capability-card">
+            <div className="portal-card-header">
+              <div className="portal-card-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 14 14" />
+                  <path d="m9 12 2 2 4-4" />
+                </svg>
+              </div>
+              <h3 className="portal-card-title">Controlled Academic Verification</h3>
+            </div>
+            <p className="portal-card-body">
+              Provides an authorized workflow for third-party entities (scholarship councils, background verification
+              agencies) to request student enrolment status with verified consent documentation, enabling institutional
+              registrars to confirm or reject requests.
+            </p>
+          </article>
+
+          {/* Capability 5 */}
+          <article className="portal-capability-card">
+            <div className="portal-card-header">
+              <div className="portal-card-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+              </div>
+              <h3 className="portal-card-title">Multi-Tenant Cryptographic Vaulting</h3>
+            </div>
+            <p className="portal-card-body">
+              All stored student identifiers are protected at rest using AES-256-GCM authenticated encryption
+              with unique nonces and institutional Associated Authenticated Data (AAD), backed by strict
+              database row-level tenant isolation.
+            </p>
+          </article>
+
+          {/* Capability 6 */}
+          <article className="portal-capability-card">
+            <div className="portal-card-header">
+              <div className="portal-card-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="16" y1="13" x2="8" y2="13" />
+                  <line x1="16" y1="17" x2="8" y2="17" />
+                  <polyline points="10 9 9 9 8 9" />
+                </svg>
+              </div>
+              <h3 className="portal-card-title">Audited Compliance Export</h3>
+            </div>
+            <p className="portal-card-body">
+              Generates downloadable CSV compliance audits with hardened formula injection defenses (CWE-1236),
+              providing timestamped reconciliation summaries of accepted rows, rejected records, and resolved exceptions.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      {/* 3. Operational Workflow */}
+      <section className="portal-workflow-section" aria-labelledby="workflow-heading">
+        <div className="portal-section-header">
+          <h2 id="workflow-heading" className="portal-section-title">
+            Operational Submission Workflow
+          </h2>
+          <p className="portal-section-desc">
+            Standard four-stage protocol for institutional batch submission and reconciliation.
+          </p>
+        </div>
+
+        <div className="portal-workflow-steps">
+          <div className="portal-step-item">
+            <div className="portal-step-number" aria-hidden="true">01</div>
+            <div className="portal-step-content">
+              <h3 className="portal-step-title">Batch Data Ingestion</h3>
+              <p className="portal-step-desc">
+                Institutional registrar uploads admitted student records with APAAR ID, discipline code, and admission category.
+              </p>
+            </div>
           </div>
 
-          <div className="gov-schedule-box">
-            <div className="gov-milestone-item active">
-              <div className="gov-milestone-indicator" />
-              <div className="gov-milestone-detail">
-                <span className="gov-milestone-date">Current Stage • 15 Oct – 31 Oct</span>
-                <span className="gov-milestone-heading">Phase-I Institutional Ingestion & Verification</span>
-                <span className="gov-milestone-desc">Mandatory batch submission of first-year technical enrolments.</span>
-              </div>
+          <div className="portal-step-item">
+            <div className="portal-step-number" aria-hidden="true">02</div>
+            <div className="portal-step-content">
+              <h3 className="portal-step-title">Automated Validation</h3>
+              <p className="portal-step-desc">
+                Engine evaluates 12-digit format conformity, required columns, and approved programme existence.
+              </p>
             </div>
+          </div>
 
-            <div className="gov-milestone-item">
-              <div className="gov-milestone-indicator pending" />
-              <div className="gov-milestone-detail">
-                <span className="gov-milestone-date">Upcoming • 01 Nov – 15 Nov</span>
-                <span className="gov-milestone-heading">Central AICTE De-duplication Scan</span>
-                <span className="gov-milestone-desc">Automated cross-institution duplicate candidate reconciliation.</span>
-              </div>
+          <div className="portal-step-item">
+            <div className="portal-step-number" aria-hidden="true">03</div>
+            <div className="portal-step-content">
+              <h3 className="portal-step-title">Quota & Collision Scan</h3>
+              <p className="portal-step-desc">
+                Reconciles enrolled headcount against sanctioned annual intake and executes blind index candidate matching.
+              </p>
             </div>
+          </div>
 
-            <div className="gov-milestone-item">
-              <div className="gov-milestone-indicator pending" />
-              <div className="gov-milestone-detail">
-                <span className="gov-milestone-date">Upcoming • 16 Nov – 30 Nov</span>
-                <span className="gov-milestone-heading">Final Intake Reconciliation & Seat Lock</span>
-                <span className="gov-milestone-desc">Issuance of AICTE National Enrolment Integrity Certificates.</span>
-              </div>
+          <div className="portal-step-item">
+            <div className="portal-step-number" aria-hidden="true">04</div>
+            <div className="portal-step-content">
+              <h3 className="portal-step-title">Exception Resolution</h3>
+              <p className="portal-step-desc">
+                Institutional staff review flagged discrepancies in the anomaly queue and log formal audit resolutions.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 5. National Portal Partner Banner Strip (As shown in screenshot) */}
-      <section className="gov-partners-ribbon" aria-label="Government Portals Network">
-        <div className="gov-partners-inner">
-          <span className="gov-partners-label">Supported Government Digital Initiatives:</span>
-          <div className="gov-partners-list">
-            <div className="gov-partner-pill">
-              <strong>Digital India</strong>
-              <span>Power To Empower</span>
-            </div>
-            <div className="gov-partner-pill">
-              <strong>@gov.in</strong>
-              <span>National Identity</span>
-            </div>
-            <div className="gov-partner-pill">
-              <strong>MeitY</strong>
-              <span>Govt. of India</span>
-            </div>
-            <div className="gov-partner-pill">
-              <strong>myGov</strong>
-              <span>Meri Sarkar</span>
-            </div>
-            <div className="gov-partner-pill">
-              <strong>NKN</strong>
-              <span>National Knowledge Net</span>
-            </div>
-            <div className="gov-partner-pill">
-              <strong>ServicePlus</strong>
-              <span>Service Delivery</span>
-            </div>
-            <div className="gov-partner-pill">
-              <strong>SwaaS</strong>
-              <span>Secure Cloud</span>
+      {/* 4. Institutional Guidance & Support Information */}
+      <section className="portal-guidance-section" aria-labelledby="guidance-heading">
+        <div className="portal-guidance-grid">
+          <div className="portal-guidance-card">
+            <h3 id="guidance-heading" className="portal-guidance-title">Guidance for Technical Institutions</h3>
+            <p className="portal-guidance-text">
+              Institutional staff must submit student enrolment batches within the prescribed academic reconciliation
+              window. Prior to uploading, ensure that academic programmes and sanctioned intake limits for Session 2026–27
+              have been reviewed and aligned with regulatory approvals.
+            </p>
+            <p className="portal-guidance-text">
+              For account access or credential updates, contact the appointed institutional Nodal Officer.
+            </p>
+          </div>
+
+          <div className="portal-guidance-card">
+            <h3 className="portal-guidance-title">Academic Verification Services</h3>
+            <p className="portal-guidance-text">
+              Authorized requesting agencies seeking academic verification must provide student consent reference
+              documentation with each inquiry. Requests are queued directly to the target institution's verification ledger
+              for registrar determination.
+            </p>
+            <div className="portal-guidance-btn-wrap">
+              <button
+                type="button"
+                className="gov-btn gov-btn-outline"
+                onClick={onGoLogin}
+              >
+                Access Verification Portal
+              </button>
             </div>
           </div>
         </div>
@@ -353,4 +284,3 @@ export default function LandingPage({ onGoLogin, onExploreDirectory }) {
     </div>
   );
 }
-

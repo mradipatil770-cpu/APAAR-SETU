@@ -35,6 +35,11 @@ export default function GovernmentFooter({ onNavigate }) {
                 </button>
               </li>
               <li>
+                <button type="button" className="gov-footer-link-btn" onClick={() => onNavigate && onNavigate('verifications')}>
+                  Academic Verifications
+                </button>
+              </li>
+              <li>
                 <button type="button" className="gov-footer-link-btn" onClick={() => onNavigate && onNavigate('reports')}>
                   Compliance Reports
                 </button>

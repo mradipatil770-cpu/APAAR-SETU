@@ -1,0 +1,4 @@
+request_id,student_ref,requester_org,requester_email,purpose,scope,consent_status
+77777777-7777-7777-7777-777777770001,STU-2026-001,National Research Council,verifications@nrc.gov.in.synthetic,SCHOLARSHIP_VALIDATION,ENROLMENT_STATUS,STUDENT_CONSENT_VERIFIED
+77777777-7777-7777-7777-777777770002,STU-2026-002,TechGlobal Consulting Corp,hr-verify@techglobal.corp.synthetic,EMPLOYMENT_BACKGROUND_CHECK,ENROLMENT_STATUS,STUDENT_CONSENT_VERIFIED
+

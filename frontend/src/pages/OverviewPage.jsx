@@ -30,9 +30,7 @@ export default function OverviewPage({ dashboardData, loading, onSelectUpload, o
           <div className="gov-section-meta">
             <span>Permanent ID: <strong className="mono">{dashboardData.institution_id.substring(0, 8)}</strong></span>
             <span className="gov-utility-separator">•</span>
-            <span>Region: Delhi NCT</span>
-            <span className="gov-utility-separator">•</span>
-            <span>Academic Year: 2026–27</span>
+            <span>Academic Cycle: <strong>Session 2026–27</strong></span>
           </div>
         </div>
         <div>

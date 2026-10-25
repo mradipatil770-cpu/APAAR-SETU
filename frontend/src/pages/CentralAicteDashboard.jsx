@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 
 export default function CentralAicteDashboard({ user, onSignOut }) {
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'directory' | 'duplicates' | 'verifications'
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
   const [institutions, setInstitutions] = useState([]);
@@ -31,9 +31,16 @@ export default function CentralAicteDashboard({ user, onSignOut }) {
       if (dupsRes.status === 'fulfilled') setDuplicates(dupsRes.value || []);
       if (verifsRes.status === 'fulfilled') setVerifications(verifsRes.value || []);
       if (intakeRes.status === 'fulfilled') setIntakeSummary(intakeRes.value || []);
+
+      if (
+        statsRes.status === 'rejected' &&
+        instsRes.status === 'rejected' &&
+        dupsRes.status === 'rejected'
+      ) {
+        setErrorMsg('Unable to retrieve central metrics. Please verify network connectivity.');
+      }
     } catch (err) {
-      console.error('Failed to load Central AICTE data:', err);
-      setErrorMsg('Failed to synchronize central regulatory metrics.');
+      setErrorMsg('Failed to synchronize central regulatory data.');
     } finally {
       setLoading(false);
     }
@@ -49,206 +56,254 @@ export default function CentralAicteDashboard({ user, onSignOut }) {
       inst.code?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const totalSanctioned = stats?.total_approved_intake || stats?.total_sanctioned_intake || 125;
+  const totalSanctioned = stats?.total_approved_intake ?? 0;
   const totalEnrolled = stats?.total_accepted_records ?? stats?.total_processed_records ?? 0;
   const utilizationPct = stats?.national_utilization_pct != null
     ? Math.round(stats.national_utilization_pct)
     : (totalSanctioned > 0 ? Math.round((totalEnrolled / totalSanctioned) * 100) : 0);
 
   return (
-    <div className="central-dashboard-container">
-      {/* 1. Central AICTE Header Bar */}
-      <div className="gov-central-masthead">
-        <div className="gov-central-title-group">
-          <div className="gov-central-badge">
-            <span className="gov-badge-icon">🏛️</span>
-            <span>AICTE Headquarters • New Delhi</span>
+    <div className="central-workspace">
+      {/* 1. Central Header */}
+      <div className="gov-section-header central-header">
+        <div>
+          <div className="gov-header-tagline">
+            <span>Central Regulatory Oversight Authority</span>
+            <span className="gov-utility-separator">•</span>
+            <span>Academic Session 2026–27</span>
           </div>
-          <h2 className="gov-central-heading">National Academic Oversight & Intake Monitoring</h2>
-          <p className="gov-central-sub">
-            Central Regulatory Console • All-India Council for Technical Education (AICTE PS 26263)
-          </p>
+          <h2 className="gov-section-title">National Academic Oversight & Intake Monitoring</h2>
+          <div className="gov-section-meta">
+            <span>Logged in as: <strong>{user?.email}</strong></span>
+            <span className="gov-utility-separator">•</span>
+            <span>Role: <strong className="mono">{user?.role || 'AICTE_ADMIN'}</strong></span>
+          </div>
         </div>
-
-        <div className="gov-central-user-pill">
-          <div className="gov-central-user-meta">
-            <span className="gov-central-user-role">{user?.role || 'AICTE_ADMIN'}</span>
-            <span className="gov-central-user-email">{user?.email}</span>
-          </div>
-          <button className="gov-btn-signout" onClick={onSignOut} title="Sign Out of Central Session">
+        <div className="gov-header-action-group">
+          <button
+            type="button"
+            className="gov-btn gov-btn-outline"
+            onClick={fetchCentralData}
+            title="Refresh data from central database"
+          >
+            <svg viewBox="0 0 20 20" fill="currentColor" className="gov-btn-svg" aria-hidden="true">
+              <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+            </svg>
+            <span>Refresh</span>
+          </button>
+          <button
+            type="button"
+            className="gov-btn gov-btn-signout"
+            onClick={onSignOut}
+          >
             Sign Out
           </button>
         </div>
       </div>
 
-      {/* 2. Top Executive Metrics Cards */}
-      <div className="gov-metrics-grid central-grid">
-        <div className="gov-metric-card primary">
-          <div className="gov-metric-header">
-            <span className="gov-metric-title">Approved Institutions</span>
-            <span className="gov-metric-icon">🏢</span>
-          </div>
-          <div className="gov-metric-value">{stats?.total_institutions || institutions.length || 2}</div>
-          <div className="gov-metric-footer">Active AICTE Technical Campuses</div>
+      {errorMsg && (
+        <div className="gov-alert-banner error" role="alert">
+          <svg viewBox="0 0 20 20" fill="currentColor" className="gov-alert-icon" aria-hidden="true">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+          </svg>
+          <span>{errorMsg}</span>
+        </div>
+      )}
+
+      {/* 2. Executive Metric Tiles */}
+      <div className="gov-stats-grid">
+        <div className="gov-stat-tile" style={{ borderTop: '4px solid var(--gov-navy)' }}>
+          <div className="gov-stat-label">Registered Institutions</div>
+          <div className="gov-stat-number">{stats?.total_institutions ?? institutions.length}</div>
+          <div className="gov-stat-subtext">Active in central directory</div>
         </div>
 
-        <div className="gov-metric-card info">
-          <div className="gov-metric-header">
-            <span className="gov-metric-title">Sanctioned Intake</span>
-            <span className="gov-metric-icon">📊</span>
-          </div>
-          <div className="gov-metric-value">{totalSanctioned.toLocaleString()}</div>
-          <div className="gov-metric-footer">Approved Seats (Session 2026–27)</div>
+        <div className="gov-stat-tile" style={{ borderTop: '4px solid var(--gov-blue-accent)' }}>
+          <div className="gov-stat-label">Approved Annual Intake</div>
+          <div className="gov-stat-number">{totalSanctioned.toLocaleString()}</div>
+          <div className="gov-stat-subtext">Sanctioned seats across programmes</div>
         </div>
 
-        <div className="gov-metric-card success">
-          <div className="gov-metric-header">
-            <span className="gov-metric-title">Validated Enrolments</span>
-            <span className="gov-metric-icon">🎓</span>
+        <div className="gov-stat-tile" style={{ borderTop: '4px solid var(--tricolor-green)' }}>
+          <div className="gov-stat-label">Validated Student Enrolments</div>
+          <div className="gov-stat-number" style={{ color: 'var(--tricolor-green)' }}>
+            {totalEnrolled.toLocaleString()}
           </div>
-          <div className="gov-metric-value">{totalEnrolled.toLocaleString()}</div>
-          <div className="gov-metric-footer">APAAR-Validated Student Records</div>
+          <div className="gov-stat-subtext">Processed & accepted admissions</div>
         </div>
 
-        <div className="gov-metric-card warning">
-          <div className="gov-metric-header">
-            <span className="gov-metric-title">Duplicate Candidates</span>
-            <span className="gov-metric-icon">⚠️</span>
+        <div className="gov-stat-tile" style={{ borderTop: '4px solid var(--tricolor-saffron)' }}>
+          <div className="gov-stat-label">Cross-Institution Candidates</div>
+          <div className="gov-stat-number" style={{ color: 'var(--tricolor-saffron)' }}>
+            {stats?.total_cross_institution_duplicates ?? duplicates.length}
           </div>
-          <div className="gov-metric-value">{stats?.cross_institution_duplicates_detected ?? duplicates.length}</div>
-          <div className="gov-metric-footer">Cross-University Discrepancies</div>
+          <div className="gov-stat-subtext">Blind index collision flags</div>
         </div>
 
-        <div className="gov-metric-card accent">
-          <div className="gov-metric-header">
-            <span className="gov-metric-title">Academic Verifications</span>
-            <span className="gov-metric-icon">🔍</span>
+        <div className="gov-stat-tile" style={{ borderTop: '4px solid #6366f1' }}>
+          <div className="gov-stat-label">Active Verification Inquiries</div>
+          <div className="gov-stat-number" style={{ color: '#6366f1' }}>
+            {verifications.length}
           </div>
-          <div className="gov-metric-value">{verifications.length}</div>
-          <div className="gov-metric-footer">Controlled Verification Audits</div>
+          <div className="gov-stat-subtext">External stakeholder requests</div>
         </div>
       </div>
 
-      {/* 3. Central Tabs Navigation */}
-      <div className="gov-central-tabs-bar">
+      {/* 3. Navigation Tabs */}
+      <div className="gov-tabs-bar" role="tablist" aria-label="Central Dashboard Views">
         <button
-          className={`gov-central-tab ${activeTab === 'overview' ? 'active' : ''}`}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'overview'}
+          className={`gov-tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
           onClick={() => setActiveTab('overview')}
         >
-          <span>National Overview & Quotas</span>
+          National Overview & Quotas
         </button>
         <button
-          className={`gov-central-tab ${activeTab === 'directory' ? 'active' : ''}`}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'directory'}
+          className={`gov-tab-btn ${activeTab === 'directory' ? 'active' : ''}`}
           onClick={() => setActiveTab('directory')}
         >
-          <span>Institutions Directory ({institutions.length})</span>
+          Institutions Directory ({institutions.length})
         </button>
         <button
-          className={`gov-central-tab ${activeTab === 'duplicates' ? 'active' : ''}`}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'duplicates'}
+          className={`gov-tab-btn ${activeTab === 'duplicates' ? 'active' : ''}`}
           onClick={() => setActiveTab('duplicates')}
         >
-          <span>Cross-Institution Duplicates ({duplicates.length})</span>
+          Cross-Institution Candidates ({duplicates.length})
         </button>
         <button
-          className={`gov-central-tab ${activeTab === 'verifications' ? 'active' : ''}`}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'verifications'}
+          className={`gov-tab-btn ${activeTab === 'verifications' ? 'active' : ''}`}
           onClick={() => setActiveTab('verifications')}
         >
-          <span>Verification Oversight ({verifications.length})</span>
+          Verification Oversight ({verifications.length})
         </button>
       </div>
 
-      {/* 4. Tab Contents */}
+      {/* 4. Tab Panels */}
       {loading ? (
-        <div className="gov-loading-state">
-          <div className="gov-spinner" />
-          <p>Querying Central AICTE Database across all institutions...</p>
+        <div className="gov-card" style={{ textAlign: 'center', padding: '48px 24px' }}>
+          <div className="gov-spinner" aria-hidden="true" />
+          <p style={{ color: 'var(--text-muted)', marginTop: '12px' }}>
+            Loading central regulatory metrics from database...
+          </p>
         </div>
       ) : (
-        <div className="gov-tab-content-wrap">
-          {/* TAB 1: National Overview */}
+        <div className="gov-tab-panel">
+          {/* TAB 1: Overview */}
           {activeTab === 'overview' && (
-            <div className="gov-overview-layout">
-              {/* Capacity Progress Bar Card */}
+            <div className="gov-panel-column">
+              {/* Capacity Allocation Meter */}
               <div className="gov-card">
                 <div className="gov-card-header">
-                  <h3 className="gov-card-title">National Intake Capacity Allocation</h3>
-                  <span className="gov-status-pill">{utilizationPct}% Utilized</span>
+                  <div>
+                    <h3 className="gov-card-title">National Intake Capacity Allocation</h3>
+                    <p className="gov-card-subtitle">
+                      Cumulative student admissions confirmed against aggregate approved capacity.
+                    </p>
+                  </div>
+                  <span className="gov-chip gov-chip-neutral">{utilizationPct}% Allocated</span>
                 </div>
                 <div className="gov-card-body">
-                  <p className="gov-body-text">
-                    Total student enrolments confirmed against aggregate AICTE approved intake for Academic Session 2026–27.
-                  </p>
                   <div className="gov-progress-bar-container large">
                     <div
                       className="gov-progress-bar-fill"
                       style={{ width: `${Math.min(utilizationPct, 100)}%` }}
+                      role="progressbar"
+                      aria-valuenow={utilizationPct}
+                      aria-valuemin="0"
+                      aria-valuemax="100"
                     />
                   </div>
                   <div className="gov-progress-meta-row">
-                    <span>Enrolled: <strong>{totalEnrolled}</strong></span>
-                    <span>Sanctioned Limit: <strong>{totalSanctioned}</strong></span>
+                    <span>Enrolled Headcount: <strong>{totalEnrolled.toLocaleString()}</strong></span>
+                    <span>Approved Capacity: <strong>{totalSanctioned.toLocaleString()}</strong></span>
                   </div>
                 </div>
               </div>
 
-              {/* Programme-wise aggregate intake monitor */}
+              {/* Programme Breakdown Table */}
               <div className="gov-card">
                 <div className="gov-card-header">
-                  <h3 className="gov-card-title">Discipline-Level Intake Distribution</h3>
+                  <div>
+                    <h3 className="gov-card-title">Discipline Quota Distribution</h3>
+                    <p className="gov-card-subtitle">
+                      Breakdown of sanctioned capacity across academic programmes.
+                    </p>
+                  </div>
                 </div>
                 <div className="gov-card-body">
-                  {intakeSummary.length > 0 ? (
-                    <table className="gov-table">
-                      <thead>
-                        <tr>
-                          <th>Discipline / Code</th>
-                          <th>Programme Name</th>
-                          <th>Approved National Intake</th>
-                          <th>Admitted Students</th>
-                          <th>Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {intakeSummary.map((prog, i) => (
-                          <tr key={i}>
-                            <td><strong>{prog.programme_code || prog.code}</strong></td>
-                            <td>{prog.programme_name || prog.name}</td>
-                            <td>{prog.approved_intake}</td>
-                            <td>{prog.actual_enrolment ?? '—'}</td>
-                            <td>
-                              <span className="gov-status-pill success">Compliant</span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  {intakeSummary.length === 0 ? (
+                    <p style={{ color: 'var(--text-muted)', padding: '16px 0' }}>
+                      No discipline quota summaries currently returned by the database.
+                    </p>
                   ) : (
-                    <div className="gov-empty-inline">
-                      <span>CSE: 5 Sanctioned seats • ECE: 60 Sanctioned seats • MECH: 60 Sanctioned seats</span>
+                    <div className="table-responsive">
+                      <table className="gov-table">
+                        <thead>
+                          <tr>
+                            <th>Discipline Code</th>
+                            <th>Programme Name</th>
+                            <th>Sanctioned Capacity</th>
+                            <th>Admitted Headcount</th>
+                            <th>Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {intakeSummary.map((prog, i) => (
+                            <tr key={i}>
+                              <td><code>{prog.programme_code || prog.code}</code></td>
+                              <td>{prog.programme_name || prog.name}</td>
+                              <td>{prog.approved_intake ?? '—'}</td>
+                              <td>{prog.actual_enrolment ?? '—'}</td>
+                              <td>
+                                <span className="gov-chip gov-chip-success">Recorded</span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* Cryptographic Protection Disclosure */}
-              <div className="gov-card security-card">
+              {/* Cryptographic Controls Disclosure */}
+              <div className="gov-card">
                 <div className="gov-card-header">
-                  <h3 className="gov-card-title">National Security & Cryptographic Safeguards</h3>
-                  <span className="gov-tag-security">AES-256-GCM / HMAC-SHA-256</span>
+                  <h3 className="gov-card-title">Data Protection & Cryptographic Architecture</h3>
                 </div>
                 <div className="gov-card-body">
-                  <div className="gov-security-features-grid">
-                    <div className="gov-sec-feature">
-                      <strong>Zero-Knowledge Duplicate Scanning</strong>
-                      <p>APAAR IDs are transformed using institutional HMAC secret salts before matching, eliminating plaintext transmission.</p>
+                  <div className="gov-security-grid">
+                    <div className="gov-sec-block">
+                      <h4>Deterministic Blind Indexing</h4>
+                      <p>
+                        Candidate detection uses HMAC-SHA-256 tokens derived from unique salts, enabling
+                        cross-institution collision detection without storing or comparing plaintext identifiers.
+                      </p>
                     </div>
-                    <div className="gov-sec-feature">
-                      <strong>Multi-Tenant Institutional Isolation</strong>
-                      <p>Strict row-level partitioning ensures institutions cannot view or modify competitor enrolments.</p>
+                    <div className="gov-sec-block">
+                      <h4>AES-256-GCM Column Vaulting</h4>
+                      <p>
+                        Stored student master records are encrypted with unique random nonces and authenticated
+                        data bounds, mitigating data exposure risks.
+                      </p>
                     </div>
-                    <div className="gov-sec-feature">
-                      <strong>Tamper-Evident Audit Ledger</strong>
-                      <p>Every CSV ingestion, anomaly review, and verification decision is sealed with actor UUID and timestamp.</p>
+                    <div className="gov-sec-block">
+                      <h4>Multi-Tenant Row-Level Security</h4>
+                      <p>
+                        Relational constraints enforce strict tenant boundaries so institutional staff cannot
+                        query other institutions' student-level records.
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -258,73 +313,125 @@ export default function CentralAicteDashboard({ user, onSignOut }) {
 
           {/* TAB 2: Institutions Directory */}
           {activeTab === 'directory' && (
-            <div className="gov-directory-layout">
-              <div className="gov-search-bar-row">
+            <div className="gov-panel-column">
+              <div className="gov-filter-bar">
                 <input
                   type="text"
                   className="gov-search-input"
-                  placeholder="Search institutions by code (e.g. AICTE-ENG-001) or name..."
+                  placeholder="Filter institutions by name or code (e.g. AICTE-ENG-001)..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  aria-label="Filter institutions"
                 />
-                <span className="gov-search-count">Showing {filteredInstitutions.length} institutions</span>
+                <span className="gov-filter-count">
+                  {filteredInstitutions.length} {filteredInstitutions.length === 1 ? 'institution' : 'institutions'} listed
+                </span>
               </div>
 
               <div className="gov-card table-card">
-                <table className="gov-table">
-                  <thead>
-                    <tr>
-                      <th>Institution Code</th>
-                      <th>Institution Name</th>
-                      <th>Sanctioned Intake</th>
-                      <th>Total Enrolled</th>
-                      <th>Compliance Status</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredInstitutions.map((inst) => (
-                      <tr key={inst.id}>
-                        <td><code>{inst.code}</code></td>
-                        <td><strong>{inst.name}</strong></td>
-                        <td>{inst.approved_intake || 125}</td>
-                        <td>{inst.enrolled_count || 0}</td>
-                        <td>
-                          <span className="gov-status-pill success">Verified Active</span>
-                        </td>
-                        <td>
-                          <button
-                            className="gov-btn-table-action"
-                            onClick={() => setSelectedInst(inst)}
-                          >
-                            Inspect Audit
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                {filteredInstitutions.length === 0 ? (
+                  <div className="gov-empty-state">
+                    <p>No institutions match the filter criteria.</p>
+                  </div>
+                ) : (
+                  <div className="table-responsive">
+                    <table className="gov-table">
+                      <thead>
+                        <tr>
+                          <th>Institution Code</th>
+                          <th>Institution Name</th>
+                          <th>Approved Intake</th>
+                          <th>Total Enrolled</th>
+                          <th>Utilization</th>
+                          <th>Open Exceptions</th>
+                          <th>Audit Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredInstitutions.map((inst) => (
+                          <tr key={inst.id}>
+                            <td><code>{inst.code}</code></td>
+                            <td><strong>{inst.name}</strong></td>
+                            <td>{inst.approved_intake ?? '—'}</td>
+                            <td>{inst.enrolled_count ?? 0}</td>
+                            <td>
+                              <span className="gov-chip gov-chip-neutral">
+                                {inst.utilization_pct != null ? `${Math.round(inst.utilization_pct)}%` : '—'}
+                              </span>
+                            </td>
+                            <td>
+                              {inst.open_anomalies > 0 ? (
+                                <span className="gov-chip gov-chip-error">{inst.open_anomalies} Open</span>
+                              ) : (
+                                <span className="gov-chip gov-chip-success">Clean</span>
+                              )}
+                            </td>
+                            <td>
+                              <button
+                                type="button"
+                                className="gov-btn-inline-action"
+                                onClick={() => setSelectedInst(inst)}
+                              >
+                                View Dossier
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
 
-              {/* Institution Modal */}
+              {/* Institution Dossier Modal */}
               {selectedInst && (
                 <div className="gov-modal-backdrop" onClick={() => setSelectedInst(null)}>
-                  <div className="gov-modal" onClick={(e) => e.stopPropagation()}>
+                  <div
+                    className="gov-modal"
+                    onClick={(e) => e.stopPropagation()}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="dossier-heading"
+                  >
                     <div className="gov-modal-header">
-                      <h3>Institution Audit Dossier: {selectedInst.code}</h3>
-                      <button className="gov-modal-close" onClick={() => setSelectedInst(null)}>×</button>
+                      <h3 id="dossier-heading">Institution Dossier: {selectedInst.code}</h3>
+                      <button
+                        type="button"
+                        className="gov-modal-close"
+                        onClick={() => setSelectedInst(null)}
+                        aria-label="Close modal"
+                      >
+                        ×
+                      </button>
                     </div>
                     <div className="gov-modal-body">
-                      <p><strong>Official Name:</strong> {selectedInst.name}</p>
-                      <p><strong>Unique Identifier:</strong> <code>{selectedInst.id}</code></p>
-                      <p><strong>Approved Annual Quota:</strong> {selectedInst.approved_intake || 125} students</p>
-                      <p><strong>Current Active Enrolments:</strong> {selectedInst.enrolled_count || 0} students</p>
-                      <div className="gov-notice-box info">
-                        <span>Institution has submitted regulatory declarations for Academic Session 2026–27. All uploads verified via blind index reconciliation.</span>
+                      <div className="gov-dossier-field">
+                        <span className="gov-dossier-label">Official Name:</span>
+                        <span className="gov-dossier-value">{selectedInst.name}</span>
+                      </div>
+                      <div className="gov-dossier-field">
+                        <span className="gov-dossier-label">System UUID:</span>
+                        <code className="gov-dossier-value">{selectedInst.id}</code>
+                      </div>
+                      <div className="gov-dossier-field">
+                        <span className="gov-dossier-label">Sanctioned Intake Quota:</span>
+                        <span className="gov-dossier-value">{selectedInst.approved_intake ?? '—'} seats</span>
+                      </div>
+                      <div className="gov-dossier-field">
+                        <span className="gov-dossier-label">Active Enrolled Count:</span>
+                        <span className="gov-dossier-value">{selectedInst.enrolled_count ?? 0} students</span>
+                      </div>
+                      <div className="gov-dossier-field">
+                        <span className="gov-dossier-label">Open Anomaly Cases:</span>
+                        <span className="gov-dossier-value">{selectedInst.open_anomalies ?? 0} cases</span>
                       </div>
                     </div>
                     <div className="gov-modal-footer">
-                      <button className="gov-btn-primary" onClick={() => setSelectedInst(null)}>
+                      <button
+                        type="button"
+                        className="gov-btn gov-btn-primary"
+                        onClick={() => setSelectedInst(null)}
+                      >
                         Close Dossier
                       </button>
                     </div>
@@ -336,92 +443,123 @@ export default function CentralAicteDashboard({ user, onSignOut }) {
 
           {/* TAB 3: Cross-Institution Duplicate Candidates */}
           {activeTab === 'duplicates' && (
-            <div className="gov-duplicates-layout">
-              <div className="gov-section-intro">
-                <h3>Cross-Institution Dual Enrolment Detection Queue</h3>
-                <p>
-                  Zero-knowledge candidate matching flags instances where identical APAAR ID blind indexes appear across distinct institutions within the same academic year.
-                </p>
+            <div className="gov-panel-column">
+              <div className="gov-card">
+                <div className="gov-card-header">
+                  <div>
+                    <h3 className="gov-card-title">Cross-Institution Collision Candidates</h3>
+                    <p className="gov-card-subtitle">
+                      Zero-knowledge candidate flags where identical APAAR ID blind indexes appear across distinct institutions.
+                    </p>
+                  </div>
+                </div>
+                <div className="gov-card-body">
+                  {duplicates.length === 0 ? (
+                    <div className="gov-empty-state">
+                      <div className="gov-empty-icon-check" aria-hidden="true">✓</div>
+                      <h4>No Cross-Institution Duplicate Candidates Flagged</h4>
+                      <p>All reconciled institutional datasets currently show distinct student identity tokens.</p>
+                    </div>
+                  ) : (
+                    <div className="table-responsive">
+                      <table className="gov-table">
+                        <thead>
+                          <tr>
+                            <th>Student Ref</th>
+                            <th>Masked Token</th>
+                            <th>Collision Institutions</th>
+                            <th>Candidate Count</th>
+                            <th>Academic Years</th>
+                            <th>Risk Classification</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {duplicates.map((dup, i) => (
+                            <tr key={i}>
+                              <td>
+                                <strong>{(dup.student_refs && dup.student_refs.join(', ')) || '—'}</strong>
+                              </td>
+                              <td>
+                                <code>{dup.masked_apaar || `${dup.apaar_lookup_hash?.slice(0, 12)}...`}</code>
+                              </td>
+                              <td>{(dup.institutions && dup.institutions.join(', ')) || '—'}</td>
+                              <td>{dup.student_count ?? 1}</td>
+                              <td>{(dup.academic_years && dup.academic_years.join(', ')) || '2026-27'}</td>
+                              <td>
+                                <span className={`gov-chip ${dup.risk_level === 'CRITICAL' ? 'gov-chip-error' : 'gov-chip-warning'}`}>
+                                  {dup.risk_level || 'REVIEW REQUIRED'}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
               </div>
-
-              {duplicates.length === 0 ? (
-                <div className="gov-empty-box">
-                  <div className="gov-empty-icon">✓</div>
-                  <h4>No Cross-Institution Duplicate Anomalies Detected</h4>
-                  <p>All institutional batches reconciled without inter-university seat collisions.</p>
-                </div>
-              ) : (
-                <div className="gov-card table-card">
-                  <table className="gov-table">
-                    <thead>
-                      <tr>
-                        <th>Candidate Reference</th>
-                        <th>Institution Code</th>
-                        <th>Programme</th>
-                        <th>Blind Index Hash</th>
-                        <th>Status</th>
-                        <th>Severity</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {duplicates.map((dup, i) => (
-                        <tr key={i}>
-                          <td><strong>{dup.student_ref}</strong></td>
-                          <td><code>{dup.institution_code || dup.institution_id}</code></td>
-                          <td>{dup.programme_code || 'B.Tech'}</td>
-                          <td><code>{dup.blind_index?.slice(0, 16)}...</code></td>
-                          <td><span className="gov-status-pill warning">{dup.status}</span></td>
-                          <td><span className="gov-tag-danger">HIGH RISK</span></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
             </div>
           )}
 
-          {/* TAB 4: Academic Verification Oversight */}
+          {/* TAB 4: Verification Oversight */}
           {activeTab === 'verifications' && (
-            <div className="gov-verifications-layout">
-              <div className="gov-section-intro">
-                <h3>Central Verification Oversight & Audit Stream</h3>
-                <p>
-                  Central audit log of academic verification requests submitted by authorized external stakeholders (employers, scholarship boards, universities) with student consent verification.
-                </p>
-              </div>
-
-              <div className="gov-card table-card">
-                <table className="gov-table">
-                  <thead>
-                    <tr>
-                      <th>Request ID</th>
-                      <th>Target Institution</th>
-                      <th>Student Reference</th>
-                      <th>Requesting Entity</th>
-                      <th>Purpose</th>
-                      <th>Consent Reference</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {verifications.map((v) => (
-                      <tr key={v.id}>
-                        <td><code>{v.id.slice(0, 8)}...</code></td>
-                        <td>{v.institution_name || 'Delhi Inst. of Eng. & Tech'}</td>
-                        <td><strong>{v.student_ref}</strong></td>
-                        <td>{v.requester_org} ({v.requester_email})</td>
-                        <td>{v.purpose}</td>
-                        <td><code>{v.consent_ref || 'STUDENT_SIGNED_CONSENT'}</code></td>
-                        <td>
-                          <span className={`gov-status-pill ${v.status === 'CONFIRMED' ? 'success' : v.status === 'REJECTED' ? 'danger' : 'warning'}`}>
-                            {v.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            <div className="gov-panel-column">
+              <div className="gov-card">
+                <div className="gov-card-header">
+                  <div>
+                    <h3 className="gov-card-title">Academic Verification Audit Ledger</h3>
+                    <p className="gov-card-subtitle">
+                      Audit trail of student verification requests received from external authorized bodies.
+                    </p>
+                  </div>
+                </div>
+                <div className="gov-card-body">
+                  {verifications.length === 0 ? (
+                    <div className="gov-empty-state">
+                      <p>No verification requests recorded in the central audit ledger.</p>
+                    </div>
+                  ) : (
+                    <div className="table-responsive">
+                      <table className="gov-table">
+                        <thead>
+                          <tr>
+                            <th>Request ID</th>
+                            <th>Target Institution</th>
+                            <th>Student Ref</th>
+                            <th>Requesting Entity</th>
+                            <th>Purpose</th>
+                            <th>Consent Status</th>
+                            <th>Determination</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {verifications.map((v) => (
+                            <tr key={v.id}>
+                              <td><code>{v.id.slice(0, 8)}...</code></td>
+                              <td>{v.institution_name || v.institution_id?.slice(0, 8)}</td>
+                              <td><strong>{v.student_ref}</strong></td>
+                              <td>
+                                <div><strong>{v.requester_org}</strong></div>
+                                <small style={{ color: 'var(--text-muted)' }}>{v.requester_email}</small>
+                              </td>
+                              <td>{v.purpose}</td>
+                              <td>
+                                <span className="gov-chip gov-chip-neutral">
+                                  {v.consent_status || 'VERIFIED'}
+                                </span>
+                              </td>
+                              <td>
+                                <span className={`gov-chip ${v.status === 'CONFIRMED' || v.status === 'APPROVED' ? 'gov-chip-success' : v.status === 'REJECTED' ? 'gov-chip-error' : 'gov-chip-warning'}`}>
+                                  {v.status}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}

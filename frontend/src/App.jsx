@@ -141,7 +141,7 @@ export default function App() {
         <div className="gov-announcement-inner">
           <span className="gov-announcement-tag">Notice</span>
           <span className="gov-announcement-text">
-            AICTE Academic Session 2026–27 Active • Mandatory APAAR ID verification & intake reconciliation in effect.
+            Academic Session 2026–27 Reconciliation Active • Ingestion and compliance verification in progress.
           </span>
           {currentUser && currentView === 'landing' && (
             <button
@@ -227,11 +227,11 @@ export default function App() {
                 )}
 
                 {activeTab === 'verifications' && (
-                  <InstitutionalVerificationsTab />
+                  <InstitutionalVerificationsTab currentUser={currentUser} />
                 )}
 
                 {activeTab === 'reports' && (
-                  <ReportsPage />
+                  <ReportsPage currentUser={currentUser} />
                 )}
               </>
             )}

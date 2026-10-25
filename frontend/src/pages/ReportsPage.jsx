@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { api } from '../services/api';
 
-export default function ReportsPage() {
+export default function ReportsPage({ currentUser }) {
   const downloadUrl = api.getReportDownloadUrl();
   const [downloading, setDownloading] = useState(false);
 
@@ -38,11 +38,11 @@ export default function ReportsPage() {
           <div className="gov-report-scope-grid">
             <div>
               <span className="gov-report-scope-label">Institution:</span>
-              <span>Delhi Institute of Engineering & Technology</span>
+              <span>{currentUser?.institution_name || 'Delhi Institute of Engineering & Technology'}</span>
             </div>
             <div>
               <span className="gov-report-scope-label">AICTE Permanent Code:</span>
-              <span className="mono">AICTE-ENG-001</span>
+              <span className="mono">{currentUser?.institution_id ? 'AICTE-ENG-001' : 'REGULATORY-HQ'}</span>
             </div>
             <div>
               <span className="gov-report-scope-label">Academic Calendar:</span>

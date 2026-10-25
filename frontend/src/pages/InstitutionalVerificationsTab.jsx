@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 
-export default function InstitutionalVerificationsTab() {
+export default function InstitutionalVerificationsTab({ currentUser }) {
   const [verifications, setVerifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('');
@@ -10,9 +10,9 @@ export default function InstitutionalVerificationsTab() {
   const [actionLoading, setActionLoading] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState(null);
 
-  // New Request Form state (for interactive demo testing)
+  // New Request Form state (for controlled demonstration/testing)
   const [showNewModal, setShowNewModal] = useState(false);
-  const [newStudentRef, setNewStudentRef] = useState('STU-2026-001');
+  const [newStudentRef, setNewStudentRef] = useState('');
   const [newOrg, setNewOrg] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [newPurpose, setNewPurpose] = useState('EMPLOYMENT_BACKGROUND_CHECK');
@@ -35,12 +35,20 @@ export default function InstitutionalVerificationsTab() {
 
   const handleDecision = async (decision) => {
     if (!selectedRequest) return;
+    if (!decisionNotes.trim()) {
+      setFeedbackMsg({
+        type: 'error',
+        text: 'Please provide formal registrar audit notes before recording the determination.',
+      });
+      return;
+    }
+
     try {
       setActionLoading(true);
-      await api.decideVerification(selectedRequest.id, decision, decisionNotes);
+      await api.decideVerification(selectedRequest.id, decision, decisionNotes.trim());
       setFeedbackMsg({
         type: 'success',
-        text: `Verification request ${selectedRequest.id.slice(0, 8)} successfully marked as ${decision}.`,
+        text: `Verification request ${selectedRequest.id.slice(0, 8)} successfully updated to ${decision}.`,
       });
       setSelectedRequest(null);
       setDecisionNotes('');
@@ -57,19 +65,29 @@ export default function InstitutionalVerificationsTab() {
 
   const handleCreateRequest = async (e) => {
     e.preventDefault();
+    const instId = currentUser?.institution_id || '11111111-1111-1111-1111-111111111111';
+    if (!newStudentRef.trim() || !newOrg.trim() || !newEmail.trim()) {
+      setFeedbackMsg({
+        type: 'error',
+        text: 'All fields are required to queue a verification inquiry.',
+      });
+      return;
+    }
+
     try {
       setActionLoading(true);
       await api.createVerificationRequest({
-        institution_id: '11111111-1111-1111-1111-111111111111',
-        student_ref: newStudentRef,
-        requester_org: newOrg,
-        requester_email: newEmail,
+        institution_id: instId,
+        student_ref: newStudentRef.trim(),
+        requester_org: newOrg.trim(),
+        requester_email: newEmail.trim(),
         purpose: newPurpose,
         scope: 'ENROLMENT_STATUS',
-        consent_ref: `CONSENT-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+        consent_ref: `CONSENT-REF-${Date.now().toString().slice(-6)}`,
         consent_status: 'STUDENT_CONSENT_VERIFIED',
       });
       setShowNewModal(false);
+      setNewStudentRef('');
       setNewOrg('');
       setNewEmail('');
       setFeedbackMsg({
@@ -88,56 +106,69 @@ export default function InstitutionalVerificationsTab() {
   };
 
   return (
-    <div className="gov-verifications-tab-page">
-      {/* Top Banner & Actions */}
-      <div className="gov-page-header">
-        <div className="gov-page-title-group">
-          <h2 className="gov-page-heading">Academic Verification Requests</h2>
-          <p className="gov-page-sub">
-            Controlled, consent-backed student academic record verification for authorized external bodies.
+    <div className="gov-page">
+      <div className="gov-section-header">
+        <div>
+          <h2 className="gov-section-title">Academic Verification Requests</h2>
+          <p className="gov-section-subtitle">
+            Controlled, consent-referenced verification of student enrolment records for authorized requesting bodies.
           </p>
         </div>
-        <button
-          className="gov-btn-primary"
-          onClick={() => setShowNewModal(true)}
-        >
-          <svg viewBox="0 0 20 20" fill="currentColor" className="gov-btn-icon">
-            <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-          </svg>
-          <span>Initiate Verification Request</span>
-        </button>
+        <div>
+          <button
+            type="button"
+            className="gov-btn gov-btn-primary"
+            onClick={() => setShowNewModal(true)}
+          >
+            <svg viewBox="0 0 20 20" fill="currentColor" className="gov-btn-svg" aria-hidden="true">
+              <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+            </svg>
+            <span>Record Verification Request</span>
+          </button>
+        </div>
       </div>
 
       {feedbackMsg && (
         <div className={`gov-alert-banner ${feedbackMsg.type}`} role="alert">
           <span>{feedbackMsg.text}</span>
-          <button className="gov-alert-close" onClick={() => setFeedbackMsg(null)}>×</button>
+          <button
+            type="button"
+            className="gov-alert-close"
+            onClick={() => setFeedbackMsg(null)}
+            aria-label="Dismiss message"
+          >
+            ×
+          </button>
         </div>
       )}
 
-      {/* Filter Strip */}
-      <div className="gov-filter-strip">
-        <span className="gov-filter-label">Filter by Status:</span>
-        <div className="gov-filter-chips">
+      {/* Filter Chips */}
+      <div className="gov-filter-bar">
+        <span className="gov-filter-label">Filter Status:</span>
+        <div className="gov-filter-chips" role="group" aria-label="Status filters">
           <button
+            type="button"
             className={`gov-chip ${statusFilter === '' ? 'active' : ''}`}
             onClick={() => setStatusFilter('')}
           >
             All Requests ({verifications.length})
           </button>
           <button
+            type="button"
             className={`gov-chip ${statusFilter === 'PENDING' ? 'active' : ''}`}
             onClick={() => setStatusFilter('PENDING')}
           >
-            Pending Review
+            Pending Determination
           </button>
           <button
-            className={`gov-chip ${statusFilter === 'CONFIRMED' ? 'active' : ''}`}
+            type="button"
+            className={`gov-chip ${statusFilter === 'CONFIRMED' || statusFilter === 'APPROVED' ? 'active' : ''}`}
             onClick={() => setStatusFilter('CONFIRMED')}
           >
             Confirmed
           </button>
           <button
+            type="button"
             className={`gov-chip ${statusFilter === 'REJECTED' ? 'active' : ''}`}
             onClick={() => setStatusFilter('REJECTED')}
           >
@@ -150,101 +181,132 @@ export default function InstitutionalVerificationsTab() {
       <div className="gov-card table-card">
         {loading ? (
           <div className="gov-loading-state">
-            <div className="gov-spinner" />
-            <p>Loading institutional verification ledger...</p>
+            <div className="gov-spinner" aria-hidden="true" />
+            <p>Loading institutional verification requests...</p>
           </div>
         ) : verifications.length === 0 ? (
-          <div className="gov-empty-box">
-            <h4>No Verification Requests Found</h4>
-            <p>No active verification requests match the selected status filter.</p>
+          <div className="gov-empty-state">
+            <h4>No Verification Requests Recorded</h4>
+            <p>No active verification requests match the selected status filter for this institution.</p>
           </div>
         ) : (
-          <table className="gov-table">
-            <thead>
-              <tr>
-                <th>Request ID</th>
-                <th>Student Ref</th>
-                <th>Requesting Body</th>
-                <th>Purpose</th>
-                <th>Scope</th>
-                <th>Consent Status</th>
-                <th>Determination</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {verifications.map((v) => (
-                <tr key={v.id}>
-                  <td><code>{v.id.slice(0, 8)}...</code></td>
-                  <td><strong>{v.student_ref}</strong></td>
-                  <td>
-                    <div><strong>{v.requester_org}</strong></div>
-                    <small className="gov-muted-text">{v.requester_email}</small>
-                  </td>
-                  <td>{v.purpose}</td>
-                  <td><code>{v.scope}</code></td>
-                  <td>
-                    <span className="gov-status-pill success">
-                      {v.consent_status || 'STUDENT_CONSENT_VERIFIED'}
-                    </span>
-                  </td>
-                  <td>
-                    <span className={`gov-status-pill ${v.status === 'CONFIRMED' ? 'success' : v.status === 'REJECTED' ? 'danger' : 'warning'}`}>
-                      {v.status}
-                    </span>
-                  </td>
-                  <td>
-                    {v.status === 'PENDING' ? (
-                      <button
-                        className="gov-btn-table-action"
-                        onClick={() => {
-                          setSelectedRequest(v);
-                          setDecisionNotes('');
-                        }}
-                      >
-                        Review Request
-                      </button>
-                    ) : (
-                      <span className="gov-muted-text">Decided</span>
-                    )}
-                  </td>
+          <div className="table-responsive">
+            <table className="gov-table">
+              <thead>
+                <tr>
+                  <th>Request ID</th>
+                  <th>Student Reference</th>
+                  <th>Requesting Body</th>
+                  <th>Purpose</th>
+                  <th>Scope</th>
+                  <th>Consent Status</th>
+                  <th>Determination</th>
+                  <th>Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {verifications.map((v) => (
+                  <tr key={v.id}>
+                    <td><code>{v.id.slice(0, 8)}...</code></td>
+                    <td><strong>{v.student_ref}</strong></td>
+                    <td>
+                      <div><strong>{v.requester_org}</strong></div>
+                      <small style={{ color: 'var(--text-muted)' }}>{v.requester_email}</small>
+                    </td>
+                    <td>{v.purpose}</td>
+                    <td><code>{v.scope}</code></td>
+                    <td>
+                      <span className="gov-chip gov-chip-neutral">
+                        {v.consent_status || 'VERIFIED'}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={`gov-chip ${v.status === 'CONFIRMED' || v.status === 'APPROVED' ? 'gov-chip-success' : v.status === 'REJECTED' ? 'gov-chip-error' : 'gov-chip-warning'}`}>
+                        {v.status}
+                      </span>
+                    </td>
+                    <td>
+                      {v.status === 'PENDING' ? (
+                        <button
+                          type="button"
+                          className="gov-btn-inline-action"
+                          onClick={() => {
+                            setSelectedRequest(v);
+                            setDecisionNotes('');
+                          }}
+                        >
+                          Review Request
+                        </button>
+                      ) : (
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Decided</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
       {/* Decision Modal */}
       {selectedRequest && (
         <div className="gov-modal-backdrop" onClick={() => setSelectedRequest(null)}>
-          <div className="gov-modal" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="gov-modal"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="decision-heading"
+          >
             <div className="gov-modal-header">
-              <h3>Academic Verification Determination</h3>
-              <button className="gov-modal-close" onClick={() => setSelectedRequest(null)}>×</button>
+              <h3 id="decision-heading">Academic Verification Determination</h3>
+              <button
+                type="button"
+                className="gov-modal-close"
+                onClick={() => setSelectedRequest(null)}
+                aria-label="Close modal"
+              >
+                ×
+              </button>
             </div>
             <div className="gov-modal-body">
-              <p><strong>Student Reference:</strong> {selectedRequest.student_ref}</p>
-              <p><strong>Requesting Body:</strong> {selectedRequest.requester_org} ({selectedRequest.requester_email})</p>
-              <p><strong>Verification Purpose:</strong> {selectedRequest.purpose}</p>
-              <p><strong>Scope:</strong> {selectedRequest.scope}</p>
-              <p><strong>Consent Document Reference:</strong> <code>{selectedRequest.consent_ref || 'STUDENT-DOC-SIGNED'}</code></p>
+              <div className="gov-dossier-field">
+                <span className="gov-dossier-label">Student Reference:</span>
+                <span className="gov-dossier-value">{selectedRequest.student_ref}</span>
+              </div>
+              <div className="gov-dossier-field">
+                <span className="gov-dossier-label">Requesting Entity:</span>
+                <span className="gov-dossier-value">{selectedRequest.requester_org} ({selectedRequest.requester_email})</span>
+              </div>
+              <div className="gov-dossier-field">
+                <span className="gov-dossier-label">Inquiry Purpose:</span>
+                <span className="gov-dossier-value">{selectedRequest.purpose}</span>
+              </div>
+              <div className="gov-dossier-field">
+                <span className="gov-dossier-label">Consent Reference:</span>
+                <code className="gov-dossier-value">{selectedRequest.consent_ref || 'STUDENT_SIGNED_CONSENT'}</code>
+              </div>
 
               <div className="gov-form-group" style={{ marginTop: '16px' }}>
-                <label className="gov-form-label">Institutional Registrar Audit Notes:</label>
+                <label htmlFor="reg-notes" className="gov-form-label">
+                  Institutional Registrar Audit Notes <span className="required-indicator" aria-hidden="true">*</span>
+                </label>
                 <textarea
+                  id="reg-notes"
                   className="gov-form-textarea"
                   rows="3"
-                  placeholder="Record verification notes, matriculation register volume, or reason for determination..."
+                  placeholder="Record verification register volume, matriculation confirmation, or reason for determination..."
                   value={decisionNotes}
                   onChange={(e) => setDecisionNotes(e.target.value)}
+                  required
                 />
               </div>
             </div>
             <div className="gov-modal-footer">
               <button
                 type="button"
-                className="gov-btn-outline danger"
+                className="gov-btn gov-btn-outline danger"
                 disabled={actionLoading}
                 onClick={() => handleDecision('REJECTED')}
               >
@@ -252,11 +314,11 @@ export default function InstitutionalVerificationsTab() {
               </button>
               <button
                 type="button"
-                className="gov-btn-primary"
+                className="gov-btn gov-btn-primary"
                 disabled={actionLoading}
                 onClick={() => handleDecision('CONFIRMED')}
               >
-                {actionLoading ? 'Processing...' : 'Confirm & Validate Academic Record'}
+                {actionLoading ? 'Recording...' : 'Confirm & Validate Record'}
               </button>
             </div>
           </div>
@@ -266,16 +328,32 @@ export default function InstitutionalVerificationsTab() {
       {/* New Request Modal */}
       {showNewModal && (
         <div className="gov-modal-backdrop" onClick={() => setShowNewModal(false)}>
-          <div className="gov-modal" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="gov-modal"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="new-req-heading"
+          >
             <div className="gov-modal-header">
-              <h3>Initiate Controlled Academic Verification</h3>
-              <button className="gov-modal-close" onClick={() => setShowNewModal(false)}>×</button>
+              <h3 id="new-req-heading">Record Controlled Academic Verification Inquiry</h3>
+              <button
+                type="button"
+                className="gov-modal-close"
+                onClick={() => setShowNewModal(false)}
+                aria-label="Close modal"
+              >
+                ×
+              </button>
             </div>
             <form onSubmit={handleCreateRequest}>
               <div className="gov-modal-body">
                 <div className="gov-form-group">
-                  <label className="gov-form-label">Student Reference ID <span className="required">*</span></label>
+                  <label htmlFor="modal-student-ref" className="gov-form-label">
+                    Student Reference ID <span className="required-indicator" aria-hidden="true">*</span>
+                  </label>
                   <input
+                    id="modal-student-ref"
                     type="text"
                     required
                     className="gov-form-input"
@@ -285,37 +363,46 @@ export default function InstitutionalVerificationsTab() {
                   />
                 </div>
                 <div className="gov-form-group">
-                  <label className="gov-form-label">Requesting Organization <span className="required">*</span></label>
+                  <label htmlFor="modal-org" className="gov-form-label">
+                    Requesting Organization <span className="required-indicator" aria-hidden="true">*</span>
+                  </label>
                   <input
+                    id="modal-org"
                     type="text"
                     required
                     className="gov-form-input"
                     value={newOrg}
                     onChange={(e) => setNewOrg(e.target.value)}
-                    placeholder="e.g. National Fellowship Board or TCS Campus Hiring"
+                    placeholder="e.g. National Scholarship Board or TCS Campus Verification"
                   />
                 </div>
                 <div className="gov-form-group">
-                  <label className="gov-form-label">Authorized Contact Email <span className="required">*</span></label>
+                  <label htmlFor="modal-email" className="gov-form-label">
+                    Authorized Contact Email <span className="required-indicator" aria-hidden="true">*</span>
+                  </label>
                   <input
+                    id="modal-email"
                     type="email"
                     required
                     className="gov-form-input"
                     value={newEmail}
                     onChange={(e) => setNewEmail(e.target.value)}
-                    placeholder="e.g. verifications@nfb.gov.in"
+                    placeholder="e.g. verifications@nsc.gov.in"
                   />
                 </div>
                 <div className="gov-form-group">
-                  <label className="gov-form-label">Verification Purpose</label>
+                  <label htmlFor="modal-purpose" className="gov-form-label">
+                    Verification Purpose
+                  </label>
                   <select
+                    id="modal-purpose"
                     className="gov-form-input"
                     value={newPurpose}
                     onChange={(e) => setNewPurpose(e.target.value)}
                   >
                     <option value="EMPLOYMENT_BACKGROUND_CHECK">Employment Background Check</option>
-                    <option value="SCHOLARSHIP_VALIDATION">National Scholarship / Fellowship Validation</option>
-                    <option value="HIGHER_STUDIES_ADMISSION">Higher Education / Transfer Verification</option>
+                    <option value="SCHOLARSHIP_VALIDATION">National Fellowship / Scholarship Validation</option>
+                    <option value="HIGHER_STUDIES_ADMISSION">Higher Education Admission Verification</option>
                     <option value="AICTE_REGULATORY_AUDIT">AICTE Regulatory Audit</option>
                   </select>
                 </div>
@@ -323,17 +410,17 @@ export default function InstitutionalVerificationsTab() {
               <div className="gov-modal-footer">
                 <button
                   type="button"
-                  className="gov-btn-text"
+                  className="gov-btn gov-btn-outline"
                   onClick={() => setShowNewModal(false)}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="gov-btn-primary"
+                  className="gov-btn gov-btn-primary"
                   disabled={actionLoading}
                 >
-                  {actionLoading ? 'Submitting...' : 'Queue Verification Request'}
+                  {actionLoading ? 'Recording...' : 'Queue Inquiry'}
                 </button>
               </div>
             </form>
@@ -343,4 +430,3 @@ export default function InstitutionalVerificationsTab() {
     </div>
   );
 }
-
