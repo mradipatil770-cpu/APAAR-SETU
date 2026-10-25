@@ -7,6 +7,15 @@ from app.schemas.schemas import (
     DashboardStats,
     AdminDashboardStats,
     ProgrammeIntakeStat,
+    LoginRequest,
+    LoginResponse,
+    UserProfileResponse,
+    CentralDashboardStats,
+    InstitutionDirectoryItem,
+    CrossInstitutionCandidateResponse,
+    VerificationCreateRequest,
+    VerificationDecisionRequest,
+    VerificationResponse,
 )
 
 __all__ = [
@@ -18,5 +27,14 @@ __all__ = [
     "DashboardStats",
     "AdminDashboardStats",
     "ProgrammeIntakeStat",
+    "LoginRequest",
+    "LoginResponse",
+    "UserProfileResponse",
+    "CentralDashboardStats",
+    "InstitutionDirectoryItem",
+    "CrossInstitutionCandidateResponse",
+    "VerificationCreateRequest",
+    "VerificationDecisionRequest",
+    "VerificationResponse",
 ]
 

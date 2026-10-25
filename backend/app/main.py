@@ -8,10 +8,13 @@ from app.core.config import settings, mask_sensitive_url
 from app.database.session import check_db_ready
 from app.api import (
     routes_health,
+    routes_auth,
     routes_uploads,
     routes_dashboard,
     routes_anomalies,
     routes_reports,
+    routes_aicte,
+    routes_verifications,
 )
 
 # Configure logging
@@ -75,8 +78,11 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 # Include Routers
 app.include_router(routes_health.router)
+app.include_router(routes_auth.router)
 app.include_router(routes_uploads.router)
 app.include_router(routes_dashboard.router)
 app.include_router(routes_anomalies.router)
 app.include_router(routes_reports.router)
+app.include_router(routes_aicte.router)
+app.include_router(routes_verifications.router)
 

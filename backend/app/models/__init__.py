@@ -10,6 +10,7 @@ from app.models.models import (
     ValidationIssue,
     AnomalyCase,
     AuditLog,
+    VerificationRequest,
 )
 
 __all__ = [
@@ -24,4 +25,5 @@ __all__ = [
     "ValidationIssue",
     "AnomalyCase",
     "AuditLog",
+    "VerificationRequest",
 ]

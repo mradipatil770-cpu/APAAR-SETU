@@ -1,77 +1,134 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
-export default function GovernmentHeader() {
+export default function GovernmentHeader({
+  currentUser,
+  onSignIn,
+  onSignOut,
+  onGoHome,
+  onFontSizeChange,
+}) {
+  const [fontSizeLevel, setFontSizeLevel] = useState(0); // -1, 0, 1
+  const [currentTime, setCurrentTime] = useState('');
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      setCurrentTime(
+        now.toLocaleDateString('en-IN', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+        }) + ' | ' + now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+      );
+    };
+    updateTime();
+    const timer = setInterval(updateTime, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const handleFontChange = (level) => {
+    setFontSizeLevel(level);
+    if (onFontSizeChange) onFontSizeChange(level);
+    const root = document.documentElement;
+    if (level === -1) root.style.fontSize = '14px';
+    else if (level === 1) root.style.fontSize = '17px';
+    else root.style.fontSize = '15px';
+  };
+
   return (
-    <header>
+    <header className="gov-portal-header">
       {/* 1. Indian Tricolor Accent Strip */}
       <div className="gov-tricolor-strip" />
 
       {/* 2. Top Utility & Accessibility Bar */}
       <div className="gov-top-utility">
-        <div>
-          <span>भारत सरकार | Government of India</span>
-          <span style={{ margin: '0 8px', color: '#94a3b8' }}>•</span>
-          <span>शिक्षा मंत्रालय | Ministry of Education</span>
-          <span style={{ margin: '0 8px', color: '#94a3b8' }}>•</span>
-          <span>अखिल भारतीय तकनीकी शिक्षा परिषद (AICTE)</span>
+        <div className="gov-top-utility-left">
+          <span className="gov-portal-meta-tag">AICTE-Approved Technical Institutions Portal</span>
+          <span className="gov-utility-separator">•</span>
+          <span>Academic Session 2026–27</span>
+          <span className="gov-utility-separator">•</span>
+          <span className="gov-tag-ps">AICTE PS 26263</span>
         </div>
-        <div className="gov-accessibility-controls">
-          <span>A-</span>
-          <button className="gov-access-btn" title="Normal Font Size">A</button>
-          <span>A+</span>
-          <span style={{ margin: '0 4px', color: '#94a3b8' }}>|</span>
-          <span style={{ fontWeight: 600 }}>English / हिन्दी</span>
+        <div className="gov-top-utility-right">
+          <span className="gov-clock-text">{currentTime}</span>
+          <span className="gov-utility-separator">•</span>
+          <div className="gov-accessibility-controls" aria-label="Font size controls">
+            <button
+              className={`gov-access-btn ${fontSizeLevel === -1 ? 'active' : ''}`}
+              title="Decrease Font Size"
+              onClick={() => handleFontChange(-1)}
+            >
+              A-
+            </button>
+            <button
+              className={`gov-access-btn ${fontSizeLevel === 0 ? 'active' : ''}`}
+              title="Default Font Size"
+              onClick={() => handleFontChange(0)}
+            >
+              A
+            </button>
+            <button
+              className={`gov-access-btn ${fontSizeLevel === 1 ? 'active' : ''}`}
+              title="Increase Font Size"
+              onClick={() => handleFontChange(1)}
+            >
+              A+
+            </button>
+          </div>
+          <span className="gov-utility-separator">•</span>
+          <span className="gov-lang-tag">English / हिन्दी</span>
         </div>
       </div>
 
-      {/* 3. Main Government Masthead */}
+      {/* 3. Main Government Brand Masthead */}
       <div className="gov-masthead">
         <div className="gov-masthead-inner">
-          <div className="gov-emblem-section">
-            {/* National Lion Capital Crest representation */}
-            <svg
-              className="gov-emblem-svg"
-              viewBox="0 0 100 100"
-              fill="currentColor"
-              xmlns="http://www.w3.org/2000/svg"
-              title="Government of India Emblem Representation"
-            >
-              <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" strokeWidth="3" />
-              <path d="M50 15 L55 35 L45 35 Z" fill="currentColor" />
-              <rect x="35" y="38" width="30" height="24" rx="2" fill="none" stroke="currentColor" strokeWidth="3" />
-              <line x1="42" y1="38" x2="42" y2="62" stroke="currentColor" strokeWidth="2" />
-              <line x1="50" y1="38" x2="50" y2="62" stroke="currentColor" strokeWidth="2" />
-              <line x1="58" y1="38" x2="58" y2="62" stroke="currentColor" strokeWidth="2" />
-              <rect x="25" y="66" width="50" height="8" rx="2" fill="currentColor" />
-              <text x="50" y="86" fontSize="9" fontWeight="bold" textAnchor="middle" fill="currentColor">
-                सत्यमेव जयते
-              </text>
-            </svg>
+          <div className="gov-brand-group" onClick={onGoHome} style={{ cursor: 'pointer' }}>
+            {/* Dignified Geometric Bridge/Gateway Icon */}
+            <div className="gov-brand-icon" aria-hidden="true">
+              <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="4" y="38" width="40" height="4" rx="2" fill="#0b2545" />
+                <path d="M10 38V18C10 14 14 10 24 10C34 10 38 14 38 18V38" stroke="#0b2545" strokeWidth="3" />
+                <path d="M18 38V24C18 21 20 19 24 19C28 19 30 21 30 24V38" stroke="#1351b4" strokeWidth="2.5" />
+                <circle cx="24" cy="8" r="3" fill="#f26a1b" />
+                <line x1="24" y1="19" x2="24" y2="38" stroke="#138808" strokeWidth="2" strokeDasharray="2 2" />
+              </svg>
+            </div>
 
             <div className="gov-title-group">
-              <h2>अपर सेतु</h2>
-              <h1>APAARSetu</h1>
-              <p>AICTE Institutional Student Data Management & Verification Portal</p>
+              <div className="gov-title-hindi">अपर सेतु</div>
+              <h1 className="gov-title-en">APAARSetu</h1>
+              <div className="gov-subtitle">
+                Institutional Student Enrolment & Intake Compliance Portal
+              </div>
             </div>
           </div>
 
-          <div className="gov-initiatives-badges">
-            <div className="gov-badge-pill">
-              <div style={{ color: '#0f52ba', fontWeight: 800 }}>ABC</div>
-              <div style={{ fontSize: '0.68rem', color: '#64748b' }}>Academic Bank of Credits</div>
+          <div className="gov-masthead-right">
+            <div className="gov-compliance-badge">
+              <div className="gov-compliance-badge-title">AICTE Intake Monitor</div>
+              <div className="gov-compliance-badge-sub">Section 10(1)(b) Framework</div>
             </div>
-            <div className="gov-badge-pill">
-              <div style={{ color: '#138808', fontWeight: 800 }}>NAD</div>
-              <div style={{ fontSize: '0.68rem', color: '#64748b' }}>National Academic Depository</div>
-            </div>
-            <div className="gov-badge-pill" style={{ borderLeft: '3px solid #ff9933' }}>
-              <div style={{ color: '#b45309', fontWeight: 800 }}>AICTE</div>
-              <div style={{ fontSize: '0.68rem', color: '#64748b' }}>Approved Prototype</div>
-            </div>
+
+            {!currentUser ? (
+              <button
+                className="gov-btn-primary gov-btn-header-login"
+                onClick={onSignIn}
+              >
+                <svg viewBox="0 0 20 20" fill="currentColor" className="gov-btn-icon">
+                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                </svg>
+                <span>Portal Sign In</span>
+              </button>
+            ) : (
+              <div className="gov-header-user-badge">
+                <span className="gov-user-role-pill">{currentUser.role}</span>
+                <span className="gov-user-email-text">{currentUser.email}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
     </header>
   );
 }
-

@@ -1,45 +1,77 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { api } from '../services/api';
 
 export default function ReportsPage() {
   const downloadUrl = api.getReportDownloadUrl();
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownload = () => {
+    setDownloading(true);
+    setTimeout(() => {
+      setDownloading(false);
+    }, 2500);
+  };
 
   return (
-    <div>
+    <div className="gov-page">
       <div className="gov-section-header">
         <div>
-          <h2>Institutional Regulatory & Audit Reports</h2>
-          <p>Export sanitized data uploads, student enrolment statistics, and anomaly determinations for official records.</p>
+          <h2 className="gov-section-title">Institutional Compliance Reports</h2>
+          <p className="gov-section-subtitle">
+            Export institutional student admission summaries, batch processing determinations, and exception audits for official records.
+          </p>
         </div>
       </div>
 
-      <div className="gov-card gov-card-accent-top" style={{ maxWidth: '720px', margin: '0 auto' }}>
-        <h3 style={{ fontSize: '1.15rem', color: 'var(--gov-navy)', marginBottom: '8px' }}>
-          Generate Compliance Summary Export (.CSV)
-        </h3>
-        <p style={{ fontSize: '0.86rem', color: 'var(--text-muted)', marginBottom: '16px', lineHeight: '1.6' }}>
-          This export aggregates institutional batch submission logs, verified enrolment totals, and open/resolved
-          anomaly cases for the active academic calendar.
-        </p>
-
-        <div style={{ background: '#f1f5f9', borderLeft: '4px solid var(--gov-blue-accent)', padding: '14px 18px', borderRadius: '4px', marginBottom: '22px', fontSize: '0.82rem', color: 'var(--text-dark)' }}>
-          <strong>🛡️ Cyber Security Compliance Notice (CWE-1236 / OWASP Standards):</strong>
-          <p style={{ marginTop: '6px', color: 'var(--text-muted)' }}>
-            All exported CSV cells are actively escaped against <em>Spreadsheet Formula Injection</em>. Cells starting with
-            formula triggers (<code className="mono">=, +, -, @, tab</code>) are prefixed with a leading apostrophe.
-            APAAR identifiers are masked by default to uphold student data privacy guidelines.
-          </p>
+      <div className="gov-card" style={{ maxWidth: '720px', margin: '0 auto' }}>
+        <div className="gov-card-header">
+          <div>
+            <h3 className="gov-card-title">Compliance Summary Export</h3>
+            <p className="gov-card-subtitle">
+              Generates a sanitized CSV summary aggregating active batch submission logs, verified enrolments, and anomaly determinations.
+            </p>
+          </div>
+          <span className="gov-chip gov-chip-neutral">Standard CSV</span>
         </div>
 
-        <a
-          href={downloadUrl}
-          className="gov-btn gov-btn-primary"
-          style={{ textDecoration: 'none' }}
-          download
-        >
-          <span>📥</span>
-          <span>Download Sanitized Institutional Audit Report (.CSV)</span>
-        </a>
+        <div className="gov-report-scope-box">
+          <div className="gov-report-scope-grid">
+            <div>
+              <span className="gov-report-scope-label">Institution:</span>
+              <span>Delhi Institute of Engineering & Technology</span>
+            </div>
+            <div>
+              <span className="gov-report-scope-label">AICTE Permanent Code:</span>
+              <span className="mono">AICTE-ENG-001</span>
+            </div>
+            <div>
+              <span className="gov-report-scope-label">Academic Calendar:</span>
+              <span>2026–27 Session</span>
+            </div>
+            <div>
+              <span className="gov-report-scope-label">Data Privacy:</span>
+              <span>Identifiers Masked (XXXXXXXX9012)</span>
+            </div>
+          </div>
+          <div className="gov-report-security-note">
+            All exported spreadsheet cells are sanitized against formula injection. Each export event is permanently attributed in the institutional audit log.
+          </div>
+        </div>
+
+        <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
+          <a
+            href={downloadUrl}
+            className="gov-btn gov-btn-primary"
+            style={{ textDecoration: 'none' }}
+            download
+            onClick={handleDownload}
+          >
+            <svg viewBox="0 0 20 20" fill="currentColor" style={{ width: '16px', height: '16px' }}>
+              <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+            <span>{downloading ? 'Preparing Report...' : 'Export Compliance Summary (.CSV)'}</span>
+          </a>
+        </div>
       </div>
     </div>
   );

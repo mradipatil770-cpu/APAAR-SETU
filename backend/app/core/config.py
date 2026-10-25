@@ -39,6 +39,7 @@ class Settings:
         # Supabase Auth Configuration (Future / Integration)
         self.SUPABASE_PROJECT_URL: str = os.getenv("SUPABASE_PROJECT_URL", "").strip()
         self.SUPABASE_ANON_KEY: str = os.getenv("SUPABASE_ANON_KEY", "").strip()
+        self.SUPABASE_JWT_SECRET: str = os.getenv("SUPABASE_JWT_SECRET", "").strip()
         self.SUPABASE_JWT_AUDIENCE: str = os.getenv("SUPABASE_JWT_AUDIENCE", "authenticated")
 
         # Cryptographic Keys (AES-256-GCM & HMAC-SHA-256)

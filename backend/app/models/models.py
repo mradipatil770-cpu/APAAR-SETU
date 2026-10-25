@@ -187,18 +187,39 @@ class AuditLog(Base):
 
     @validates("user_id")
     def validate_user_id(self, key, value):
-        if not value:
+        if value is None:
             return None
         try:
             return str(uuid.UUID(str(value)))
         except (ValueError, TypeError, AttributeError):
-            return None
+            raise ValueError(f"Invalid UUID for audit log actor: '{value}'. Audit records require a valid UUID format or None.")
 
     @validates("institution_id")
     def validate_institution_id(self, key, value):
-        if not value:
+        if value is None:
             return None
         try:
             return str(uuid.UUID(str(value)))
         except (ValueError, TypeError, AttributeError):
-            return None
+            raise ValueError(f"Invalid UUID for audit log institution: '{value}'. Audit records require a valid UUID format or None.")
+
+
+class VerificationRequest(Base):
+    __tablename__ = "verification_requests"
+
+    id = Column(Uuid(as_uuid=False), primary_key=True, default=generate_uuid)
+    institution_id = Column(Uuid(as_uuid=False), ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_ref = Column(String(100), nullable=False, index=True)
+    requester_org = Column(String(255), nullable=False)
+    requester_email = Column(String(255), nullable=False)
+    purpose = Column(String(100), nullable=False)
+    scope = Column(String(100), nullable=False, default="ENROLMENT_STATUS")
+    consent_ref = Column(String(100), nullable=True)
+    consent_status = Column(String(50), nullable=False, default="STUDENT_CONSENT_VERIFIED")
+    status = Column(String(50), nullable=False, default="PENDING", index=True)
+    decision_notes = Column(Text, nullable=True)
+    decided_by = Column(Uuid(as_uuid=False), nullable=True)
+    decided_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), server_default=func.now())
+
+    institution = relationship("Institution")

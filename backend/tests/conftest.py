@@ -5,6 +5,7 @@ from pathlib import Path
 # Ensure TESTING environment variable is set
 os.environ["TESTING"] = "true"
 os.environ["ENVIRONMENT"] = "testing"
+os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 
 import sys
 backend_path = Path(__file__).resolve().parent.parent
@@ -19,7 +20,7 @@ from fastapi.testclient import TestClient
 from app.database.base import Base
 from app.database.session import get_db
 from app.main import app
-from app.models.models import Institution, Programme, ApprovedIntake, User
+from app.models.models import Institution, Programme, ApprovedIntake, User, Student, VerificationRequest
 
 # In-memory SQLite engine strictly isolated for local automated tests
 TEST_DB_URL = "sqlite:///:memory:"
@@ -91,6 +92,46 @@ def setup_test_database():
         approved_intake=60,
     )
     db.add_all([intake_cse, intake_ece])
+
+    # Seed users for authentication tests
+    u1 = User(
+        id="33333333-3333-3333-3333-333333333333",
+        email="demo_admin@delhi-tech.edu.synthetic",
+        institution_id=inst.id,
+        role="institution_admin",
+    )
+    u_aicte = User(
+        id="44444444-4444-4444-4444-444444440000",
+        email="aicte_director@aicte-india.org.synthetic",
+        institution_id=None,
+        role="AICTE_ADMIN",
+    )
+    db.add_all([u1, u_aicte])
+
+    # Seed sample student and verification request
+    student = Student(
+        id="88888888-8888-8888-8888-888888880001",
+        institution_id=inst.id,
+        student_ref="STU-2026-001",
+        apaar_id="999911112222",
+        category="General",
+    )
+    db.add(student)
+    db.flush()
+
+    vr = VerificationRequest(
+        id="77777777-7777-7777-7777-777777770001",
+        institution_id=inst.id,
+        student_ref="STU-2026-001",
+        requester_org="National Research Council",
+        requester_email="verifications@nrc.gov.in.synthetic",
+        purpose="SCHOLARSHIP_VALIDATION",
+        scope="ENROLMENT_STATUS",
+        consent_ref="CONSENT-DOC-2026-8812",
+        consent_status="STUDENT_CONSENT_VERIFIED",
+        status="PENDING",
+    )
+    db.add(vr)
 
     db.commit()
     db.close()
