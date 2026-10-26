@@ -1,351 +1,271 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { getTranslation } from '../i18n/translations';
 
-export default function LandingPage({ onGoLogin, lang = 'en' }) {
-  const [expandedSection, setExpandedSection] = useState(null);
-
-  const toggleSection = (id) => {
-    setExpandedSection(expandedSection === id ? null : id);
+export default function LandingPage({ onGoLogin, onGoRegister, lang = 'en' }) {
+  const handleRegisterClick = () => {
+    if (onGoRegister) {
+      onGoRegister();
+    } else if (onGoLogin) {
+      onGoLogin();
+    }
   };
 
-  const services = [
-    {
-      id: 'intake',
-      title: getTranslation('service1Title', lang),
-      desc: getTranslation('service1Desc', lang),
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="gov-icon-svg">
-          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-          <polyline points="9 22 9 12 15 12 15 22" />
-        </svg>
-      ),
-      specs: [
-        'Sanctioned limits by discipline (UG Engineering, PG, MCA, Management)',
-        'Automatic utilization rate calculation and seat threshold tracking',
-        'Direct penalty alerts for excess admissions beyond approved ceiling',
-      ],
-    },
-    {
-      id: 'ingestion',
-      title: getTranslation('service2Title', lang),
-      desc: getTranslation('service2Desc', lang),
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="gov-icon-svg">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-          <polyline points="17 8 12 3 7 8" />
-          <line x1="12" y1="3" x2="12" y2="15" />
-        </svg>
-      ),
-      specs: [
-        'Deterministic validation of 12-digit numeric APAAR identifiers',
-        'Mandatory header integrity checks and CSV formula escaping',
-        'SHA-256 batch cryptographic checksums to prevent duplicate uploads',
-      ],
-    },
-    {
-      id: 'collision',
-      title: getTranslation('service3Title', lang),
-      desc: getTranslation('service3Desc', lang),
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="gov-icon-svg">
-          <circle cx="12" cy="12" r="10" />
-          <line x1="12" y1="8" x2="12" y2="12" />
-          <line x1="12" y1="16" x2="12.01" y2="16" />
-        </svg>
-      ),
-      specs: [
-        'Cross-institutional multi-enrolment detection across all AICTE institutes',
-        'Privacy-preserving blinded token comparison',
-        'Regulatory workflow for resolution with audit timestamping',
-      ],
-    },
-    {
-      id: 'transfers',
-      title: getTranslation('service4Title', lang),
-      desc: getTranslation('service4Desc', lang),
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="gov-icon-svg">
-          <polyline points="17 1 21 5 17 9" />
-          <path d="M3 11V9a4 4 0 0 1 4-4h14" />
-          <polyline points="7 23 3 19 7 15" />
-          <path d="M21 13v2a4 4 0 0 1-4 4H3" />
-        </svg>
-      ),
-      specs: [
-        'Releasing institute digital NOC generation',
-        'Receiving institute quota availability check and acceptance',
-        'Central AICTE Bureau endorsement for regulatory finality',
-      ],
-    },
-    {
-      id: 'reports',
-      title: getTranslation('service5Title', lang),
-      desc: getTranslation('service5Desc', lang),
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="gov-icon-svg">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-          <polyline points="14 2 14 8 20 8" />
-          <line x1="16" y1="13" x2="8" y2="13" />
-          <line x1="16" y1="17" x2="8" y2="17" />
-          <polyline points="10 9 9 9 8 9" />
-        </svg>
-      ),
-      specs: [
-        'Institutional compliance certificates with seat breakdown',
-        'National intake analytics by state, category, and discipline',
-        'Direct export to standard PDF and CSV formats',
-      ],
-    },
-  ];
+  const handleScrollToSection = (id) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   return (
-    <div className="mahadbt-landing-root">
-      {/* 1. MahaDBT-Style Top Red Notification Banner */}
-      <div className="mahadbt-alert-ticker" role="region" aria-label="Portal Directive">
-        <div className="mahadbt-alert-ticker-inner">
-          <span className="mahadbt-alert-badge">Notice</span>
-          <span className="mahadbt-alert-text">
-            {getTranslation('tickerNotice', lang)}
-          </span>
-        </div>
-      </div>
-
-      {/* 2. Three-Column Administrative Portal Grid (Modeled on MahaDBT / NIC Reference) */}
-      <div className="mahadbt-layout-grid">
-        {/* Left Column: Guidelines, Policy Directives & Notice Board */}
-        <aside className="mahadbt-col-left" aria-label="Guidelines and Notices">
-          {/* Important Guidelines Links */}
-          <div className="mahadbt-panel">
-            <div className="mahadbt-panel-header primary-blue">
-              <h3>{getTranslation('userManualsTitle', lang)}</h3>
-            </div>
-            <div className="mahadbt-guidelines-list">
-              <a href="#guidelines-intake" className="mahadbt-guide-item" onClick={(e) => { e.preventDefault(); }}>
-                <span className="guide-icon">📋</span>
-                <span className="guide-label">{getTranslation('guidelinesIntake', lang)}</span>
-              </a>
-              <a href="#guidelines-apaar" className="mahadbt-guide-item" onClick={(e) => { e.preventDefault(); }}>
-                <span className="guide-icon">🆔</span>
-                <span className="guide-label">{getTranslation('guidelinesApaar', lang)}</span>
-              </a>
-              <a href="#guidelines-transfers" className="mahadbt-guide-item" onClick={(e) => { e.preventDefault(); }}>
-                <span className="guide-icon">🔄</span>
-                <span className="guide-label">{getTranslation('guidelinesTransfers', lang)}</span>
-              </a>
-              <a href="#guidelines-courses" className="mahadbt-guide-item" onClick={(e) => { e.preventDefault(); }}>
-                <span className="guide-icon">🏛️</span>
-                <span className="guide-label">{getTranslation('guidelinesCourses', lang)}</span>
-              </a>
-            </div>
-          </div>
-
-          {/* Official Notice Board */}
-          <div className="mahadbt-panel">
-            <div className="mahadbt-panel-header warning-orange">
-              <div className="panel-title-with-icon">
-                <span className="header-bell-icon">🔔</span>
-                <h3>{getTranslation('noticeBoardTitle', lang)}</h3>
-              </div>
-            </div>
-            <div className="mahadbt-notice-list">
-              <div className="mahadbt-notice-item">
-                <span className="notice-bullet">•</span>
-                <div className="notice-content">
-                  <strong className="notice-heading">{getTranslation('notice1Title', lang)}</strong>
-                  <p className="notice-desc">{getTranslation('notice1Body', lang)}</p>
-                </div>
-              </div>
-              <div className="mahadbt-notice-item">
-                <span className="notice-bullet">•</span>
-                <div className="notice-content">
-                  <strong className="notice-heading">{getTranslation('notice2Title', lang)}</strong>
-                  <p className="notice-desc">{getTranslation('notice2Body', lang)}</p>
-                </div>
-              </div>
-              <div className="mahadbt-notice-item">
-                <span className="notice-bullet">•</span>
-                <div className="notice-content">
-                  <strong className="notice-heading">{getTranslation('notice3Title', lang)}</strong>
-                  <p className="notice-desc">{getTranslation('notice3Body', lang)}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Security & Regulatory Compliance Box */}
-          <div className="mahadbt-panel compliance-box">
-            <div className="compliance-inner">
-              <div className="compliance-shield">🛡️</div>
-              <div className="compliance-text">
-                <strong>Standard IT & Data Security</strong>
-                <p>Protected under Government of India data privacy guidelines & AICTE technical directives.</p>
-              </div>
-            </div>
-          </div>
-        </aside>
-
-        {/* Center Column: Portal Introduction & Service Registry Modules */}
-        <section className="mahadbt-col-center" aria-label="Services and Modules">
-          {/* Administrative Overview Header */}
-          <div className="mahadbt-center-hero">
-            <div className="hero-kicker">
-              <span>{getTranslation('aicteBureau', lang)}</span>
-            </div>
-            <h1 className="hero-main-title">
-              {getTranslation('landingHeroTitle', lang)}
+    <div className="gov-new-landing-wrapper">
+      {/* 1. Hero Section (Split Layout: Text & CTA on Left, Indian Students Photo on Right) */}
+      <section className="gov-hero-split-section" aria-labelledby="hero-title" id="home">
+        <div className="gov-hero-split-container">
+          {/* Left Text Block */}
+          <div className="gov-hero-left-col">
+            <h1 id="hero-title" className="gov-hero-title-bold">
+              {getTranslation('heroMainTitle', lang)}
             </h1>
-            <p className="hero-main-desc">
-              {getTranslation('landingHeroDesc', lang)}
+            <h2 className="gov-hero-subtitle-primary">
+              {getTranslation('heroSubTitle', lang)}
+            </h2>
+            <p className="gov-hero-description">
+              {getTranslation('heroDesc', lang)}
             </p>
-            <div className="hero-action-row">
+
+            {/* Action CTA Buttons */}
+            <div className="gov-hero-cta-group">
               <button
                 type="button"
-                className="gov-btn gov-btn-primary"
-                onClick={onGoLogin}
+                className="gov-hero-btn-orange"
+                onClick={handleRegisterClick}
               >
-                <span>{getTranslation('applicantLogin', lang)}</span>
-                <span className="btn-arrow">→</span>
+                <span className="gov-btn-icon-span" aria-hidden="true">🏛️</span>
+                <span>{getTranslation('btnRegisterInst', lang)}</span>
               </button>
+
               <button
                 type="button"
-                className="gov-btn gov-btn-secondary"
+                className="gov-hero-btn-white"
                 onClick={onGoLogin}
               >
-                <span>{getTranslation('newRegistration', lang)}</span>
+                <span className="gov-btn-icon-span" aria-hidden="true">👤</span>
+                <span>{getTranslation('btnLogin', lang)}</span>
               </button>
             </div>
           </div>
 
-          {/* Department / Service Registry Modules (MahaDBT "All Schemes" Accordion Style) */}
-          <div className="mahadbt-schemes-container">
-            <div className="schemes-header-bar">
-              <span className="schemes-bar-icon">🏛️</span>
-              <h2>{getTranslation('servicesHeading', lang)}</h2>
-            </div>
-
-            <div className="schemes-accordion-list">
-              {services.map((srv) => {
-                const isOpen = expandedSection === srv.id;
-                return (
-                  <div key={srv.id} className={`scheme-accordion-item ${isOpen ? 'open' : ''}`}>
-                    <button
-                      type="button"
-                      className="scheme-accordion-trigger"
-                      onClick={() => toggleSection(srv.id)}
-                      aria-expanded={isOpen}
-                    >
-                      <div className="trigger-left">
-                        <span className="scheme-icon-wrap">{srv.icon}</span>
-                        <span className="scheme-title-text">{srv.title}</span>
-                      </div>
-                      <span className="trigger-toggle-indicator">{isOpen ? '−' : '+'}</span>
-                    </button>
-                    {isOpen && (
-                      <div className="scheme-accordion-body">
-                        <p className="scheme-body-desc">{srv.desc}</p>
-                        <ul className="scheme-specs-list">
-                          {srv.specs.map((item, idx) => (
-                            <li key={idx}>
-                              <span className="spec-check">✓</span>
-                              <span>{item}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
-        {/* Right Column: Portal Services & Direct Access Links */}
-        <aside className="mahadbt-col-right" aria-label="Portal Action Services">
-          {/* Quick Access Action Cards */}
-          <div className="mahadbt-panel action-links-panel">
-            <div className="mahadbt-panel-header action-header">
-              <h3>{getTranslation('quickLinksTitle', lang)}</h3>
-            </div>
-            <div className="mahadbt-action-menu">
-              <button
-                type="button"
-                className="mahadbt-action-btn register-action"
-                onClick={onGoLogin}
-              >
-                <span className="action-btn-icon">📝</span>
-                <span className="action-btn-label">{getTranslation('newRegistration', lang)}</span>
-              </button>
-              <button
-                type="button"
-                className="mahadbt-action-btn login-action"
-                onClick={onGoLogin}
-              >
-                <span className="action-btn-icon">🔐</span>
-                <span className="action-btn-label">{getTranslation('applicantLogin', lang)}</span>
-              </button>
-              <button
-                type="button"
-                className="mahadbt-action-btn central-action"
-                onClick={onGoLogin}
-              >
-                <span className="action-btn-icon">🏛️</span>
-                <span className="action-btn-label">{getTranslation('centralLogin', lang)}</span>
-              </button>
-              <button
-                type="button"
-                className="mahadbt-action-btn track-action"
-                onClick={onGoLogin}
-              >
-                <span className="action-btn-icon">🔍</span>
-                <span className="action-btn-label">{getTranslation('trackApplication', lang)}</span>
-              </button>
-            </div>
-          </div>
-
-          {/* User Manuals & Guidelines Download Box */}
-          <div className="mahadbt-panel manuals-panel">
-            <div className="mahadbt-panel-header gray-header">
-              <div className="panel-title-with-icon">
-                <span className="header-doc-icon">📖</span>
-                <h3>{getTranslation('userManualsTitle', lang)}</h3>
-              </div>
-            </div>
-            <div className="mahadbt-manuals-list">
-              <div className="manual-item">
-                <span className="pdf-icon">📄</span>
-                <span className="manual-text">AICTE Ingestion User Manual (AY 2026-27)</span>
-              </div>
-              <div className="manual-item">
-                <span className="pdf-icon">📄</span>
-                <span className="manual-text">CSV Data Format & APAAR ID Schema</span>
-              </div>
-              <div className="manual-item">
-                <span className="pdf-icon">📄</span>
-                <span className="manual-text">Inter-Institutional Transfer SOP</span>
-              </div>
-              <div className="manual-item">
-                <span className="pdf-icon">📄</span>
-                <span className="manual-text">Supernumerary Quota Verification Rules</span>
+          {/* Right Photographic Image Block */}
+          <div className="gov-hero-right-col" aria-hidden="true">
+            <div className="gov-hero-image-frame">
+              <img
+                src="/assets/hero-students.jpg"
+                alt="Students collaborating on campus with laptops"
+                className="gov-hero-student-photo"
+                onError={(e) => {
+                  // Fallback to stylized SVG card if image file is not found
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.nextSibling.style.display = 'flex';
+                }}
+              />
+              <div className="gov-hero-img-fallback" style={{ display: 'none' }}>
+                <svg viewBox="0 0 100 80" className="gov-fallback-svg">
+                  <rect width="100" height="80" fill="#e2e8f0" rx="8" />
+                  <circle cx="50" cy="30" r="14" fill="#0b2545" />
+                  <path d="M25 65 C25 45 75 45 75 65" fill="#1769AA" />
+                </svg>
               </div>
             </div>
           </div>
+        </div>
+      </section>
 
-          {/* FAQ & Citizen Charter */}
-          <div className="mahadbt-panel support-panel">
-            <div className="support-links-group">
-              <div className="support-link-item">
-                <span className="support-icon">❓</span>
-                <span className="support-title">{getTranslation('faqTitle', lang)}</span>
+      {/* 2. "How It Helps Institutions" Section */}
+      <section className="gov-how-it-helps-section" aria-labelledby="how-it-helps-heading" id="workflow">
+        <div className="gov-section-header">
+          <h2 id="how-it-helps-heading" className="gov-section-main-heading">
+            {getTranslation('howItHelpsTitle', lang)}
+          </h2>
+          <p className="gov-section-sub-heading">
+            {getTranslation('howItHelpsSub', lang)}
+          </p>
+        </div>
+
+        <div className="gov-helps-content-layout">
+          {/* Left: 6 Feature Cards Grid (2 cols x 3 rows) */}
+          <div className="gov-features-grid-left">
+            {/* 1. Data Submission & Validation */}
+            <div className="gov-feature-card" onClick={onGoLogin} role="button" tabIndex={0}>
+              <div className="gov-card-icon-bubble bubble-blue" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="gov-card-svg">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="16" y1="13" x2="8" y2="13" />
+                  <line x1="16" y1="17" x2="8" y2="17" />
+                  <polyline points="10 9 9 9 8 9" />
+                </svg>
               </div>
-              <div className="support-link-item">
-                <span className="support-icon">👥</span>
-                <span className="support-title">{getTranslation('citizenCharter', lang)}</span>
+              <div className="gov-card-body">
+                <h3 className="gov-card-title">{getTranslation('card1Title', lang)}</h3>
+                <p className="gov-card-text">{getTranslation('card1Desc', lang)}</p>
+              </div>
+            </div>
+
+            {/* 2. Intake Compliance */}
+            <div className="gov-feature-card" onClick={onGoLogin} role="button" tabIndex={0}>
+              <div className="gov-card-icon-bubble bubble-green" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="gov-card-svg">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  <polyline points="9 12 11 14 15 10" />
+                </svg>
+              </div>
+              <div className="gov-card-body">
+                <h3 className="gov-card-title">{getTranslation('card2Title', lang)}</h3>
+                <p className="gov-card-text">{getTranslation('card2Desc', lang)}</p>
+              </div>
+            </div>
+
+            {/* 3. Duplicate Record Review */}
+            <div className="gov-feature-card" onClick={onGoLogin} role="button" tabIndex={0}>
+              <div className="gov-card-icon-bubble bubble-purple" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="gov-card-svg">
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  <line x1="11" y1="8" x2="11" y2="14" />
+                  <line x1="8" y1="11" x2="14" y2="11" />
+                </svg>
+              </div>
+              <div className="gov-card-body">
+                <h3 className="gov-card-title">{getTranslation('card3Title', lang)}</h3>
+                <p className="gov-card-text">{getTranslation('card3Desc', lang)}</p>
+              </div>
+            </div>
+
+            {/* 4. Student Transfers */}
+            <div className="gov-feature-card" onClick={onGoLogin} role="button" tabIndex={0}>
+              <div className="gov-card-icon-bubble bubble-orange" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="gov-card-svg">
+                  <polyline points="17 1 21 5 17 9" />
+                  <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+                  <polyline points="7 23 3 19 7 15" />
+                  <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+                </svg>
+              </div>
+              <div className="gov-card-body">
+                <h3 className="gov-card-title">{getTranslation('card4Title', lang)}</h3>
+                <p className="gov-card-text">{getTranslation('card4Desc', lang)}</p>
+              </div>
+            </div>
+
+            {/* 5. Authorized Verification */}
+            <div className="gov-feature-card" onClick={onGoLogin} role="button" tabIndex={0}>
+              <div className="gov-card-icon-bubble bubble-teal" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="gov-card-svg">
+                  <circle cx="12" cy="8" r="7" />
+                  <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" />
+                  <polyline points="9 8 11 10 15 6" />
+                </svg>
+              </div>
+              <div className="gov-card-body">
+                <h3 className="gov-card-title">{getTranslation('card5Title', lang)}</h3>
+                <p className="gov-card-text">{getTranslation('card5Desc', lang)}</p>
+              </div>
+            </div>
+
+            {/* 6. Reports & Monitoring */}
+            <div className="gov-feature-card" onClick={onGoLogin} role="button" tabIndex={0}>
+              <div className="gov-card-icon-bubble bubble-blue-alt" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="gov-card-svg">
+                  <line x1="18" y1="20" x2="18" y2="10" />
+                  <line x1="12" y1="20" x2="12" y2="4" />
+                  <line x1="6" y1="20" x2="6" y2="14" />
+                  <line x1="2" y1="20" x2="22" y2="20" />
+                </svg>
+              </div>
+              <div className="gov-card-body">
+                <h3 className="gov-card-title">{getTranslation('card6Title', lang)}</h3>
+                <p className="gov-card-text">{getTranslation('card6Desc', lang)}</p>
               </div>
             </div>
           </div>
-        </aside>
-      </div>
+
+          {/* Right: Spotlight Container */}
+          <div className="gov-spotlight-right-box" id="about">
+            <div className="gov-spotlight-inner">
+              <div className="gov-spotlight-icon" aria-hidden="true">
+                <span className="gov-spotlight-pillar-icon">🏛️</span>
+              </div>
+              <h3 className="gov-spotlight-title">
+                {getTranslation('spotlightTitle', lang)}
+              </h3>
+              <p className="gov-spotlight-desc">
+                {getTranslation('spotlightDesc', lang)}
+              </p>
+              <button
+                type="button"
+                className="gov-spotlight-btn"
+                onClick={handleRegisterClick}
+              >
+                <span>{getTranslation('knowMoreBtn', lang)}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. "Our Key Stakeholders" Section */}
+      <section className="gov-stakeholders-section" aria-labelledby="stakeholders-heading" id="stakeholders">
+        <div className="gov-stakeholders-strip">
+          <div className="gov-stakeholders-label">
+            <span id="stakeholders-heading">{getTranslation('stakeholdersTitle', lang)}</span>
+          </div>
+
+          <div className="gov-stakeholders-items">
+            {/* Stakeholder 1: Ministry of Education */}
+            <div className="gov-stakeholder-item">
+              <img
+                src="/assets/stakeholder-moe.png"
+                alt="Ministry of Education Government of India"
+                className="gov-stakeholder-img"
+              />
+            </div>
+
+            <div className="gov-stakeholder-divider" aria-hidden="true" />
+
+            {/* Stakeholder 2: AICTE */}
+            <div className="gov-stakeholder-item">
+              <img
+                src="/assets/stakeholder-aicte.png"
+                alt="All India Council for Technical Education"
+                className="gov-stakeholder-img"
+              />
+            </div>
+
+            <div className="gov-stakeholder-divider" aria-hidden="true" />
+
+            {/* Stakeholder 3: MoE's Innovation Cell */}
+            <div className="gov-stakeholder-item">
+              <img
+                src="/assets/stakeholder-mic.png"
+                alt="MoE's Innovation Cell Government of India"
+                className="gov-stakeholder-img"
+              />
+            </div>
+
+            <div className="gov-stakeholder-divider" aria-hidden="true" />
+
+            {/* Stakeholder 4: National Informatics Centre */}
+            <div className="gov-stakeholder-item">
+              <img
+                src="/assets/stakeholder-nic.png"
+                alt="National Informatics Centre"
+                className="gov-stakeholder-img"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

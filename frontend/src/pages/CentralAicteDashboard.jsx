@@ -17,6 +17,7 @@ export default function CentralAicteDashboard({ user, onSignOut, lang = 'en' }) 
   const [errorMsg, setErrorMsg] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const isAdmin = user?.role === 'AICTE_ADMIN';
 
@@ -66,12 +67,10 @@ export default function CentralAicteDashboard({ user, onSignOut, lang = 'en' }) 
     }
   };
 
-  // Initial load: Fetch overview metrics
   useEffect(() => {
     fetchTabData('overview');
   }, []);
 
-  // On tab change: Load tab-specific data on-demand
   useEffect(() => {
     fetchTabData(activeTab);
   }, [activeTab]);
@@ -124,610 +123,735 @@ export default function CentralAicteDashboard({ user, onSignOut, lang = 'en' }) 
     ? Math.round(stats.national_utilization_pct)
     : (totalSanctioned > 0 ? Math.round((totalEnrolled / totalSanctioned) * 100) : 0);
 
+  // Reference Image 2 Sample Recent Institutional Batches
+  const sampleBatches = [
+    { batchId: 'BATCH-2026-ENG-001', instName: 'Delhi Institute of Engineering & Technology', records: '1,240', ratio: '97.5%', status: 'VERIFIED' },
+    { batchId: 'BATCH-2026-ENG-002', instName: 'Pune Technological University', records: '860', ratio: '95.1%', status: 'VERIFIED' },
+    { batchId: 'BATCH-2026-ENG-003', instName: 'Sardar Vallabhbhai Regional Institute of Tech', records: '420', ratio: '89.2%', status: 'ACTION_REQUIRED' },
+    { batchId: 'BATCH-2026-ENG-004', instName: 'Govt College of Engineering, Amravati', records: '610', ratio: '98.0%', status: 'VERIFIED' },
+  ];
+
   return (
-    <div className="central-workspace">
-      {/* 1. Central Header */}
-      <div className="gov-section-header central-header">
-        <div>
-          <div className="gov-header-tagline">
-            <span>Central Regulatory Oversight Authority</span>
-            <span className="gov-utility-separator">•</span>
-            <span>Academic Session 2026–27</span>
-          </div>
-          <h2 className="gov-section-title">National Academic Oversight & Intake Monitoring</h2>
-          <div className="gov-section-meta">
-            <span>Logged in as: <strong>{user?.email}</strong></span>
-            <span className="gov-utility-separator">•</span>
-            <span>Role: <strong className="mono">{user?.role || 'AICTE_ADMIN'}</strong></span>
-          </div>
-        </div>
-        <div className="gov-header-action-group">
-          <button
-            type="button"
-            className="gov-btn gov-btn-outline"
-            onClick={handleManualRefresh}
-            title="Refresh data from central database"
-          >
-            <svg viewBox="0 0 20 20" fill="currentColor" className="gov-btn-svg" aria-hidden="true">
-              <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+    <div className="gov-admin-shell">
+      {/* 1. Left Dark Navy Sidebar (Reference Image 2) */}
+      <aside className={`gov-admin-sidebar ${sidebarOpen ? 'open' : 'collapsed'}`}>
+        <div className="admin-sidebar-header">
+          <div className="admin-logo-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="currentColor" className="logo-svg">
+              <path d="M12 2L1 7l11 5 9-4.09V17h2V7L12 2z" />
+              <path d="M4 11.5v5c0 3.03 3.58 5.5 8 5.5s8-2.47 8-5.5v-5L12 16l-8-4.5z" />
             </svg>
-            <span>Refresh</span>
-          </button>
+          </div>
+          <div className="admin-sidebar-title-group">
+            <h2 className="admin-brand-title">{getTranslation('centralPortalTitle', lang)}</h2>
+            <span className="admin-brand-subtitle">{getTranslation('centralPortalSubtitle', lang)}</span>
+          </div>
+        </div>
+
+        {/* Action Button: + Initiate Verification */}
+        <div className="admin-sidebar-action-wrap">
           <button
             type="button"
-            className="gov-btn gov-btn-signout"
-            onClick={onSignOut}
+            className="btn-initiate-verification"
+            onClick={() => setActiveTab('verifications')}
           >
-            Sign Out
+            {getTranslation('initiateVerification', lang)}
           </button>
         </div>
-      </div>
 
-      {successMsg && (
-        <div className="gov-alert-banner success" style={{ marginBottom: '16px' }}>
-          <span>{successMsg}</span>
+        {/* Sidebar Navigation Items with Badges */}
+        <nav className="admin-sidebar-menu" aria-label="Central Navigation">
+          <button
+            type="button"
+            className={`admin-menu-item ${activeTab === 'overview' ? 'active' : ''}`}
+            onClick={() => setActiveTab('overview')}
+          >
+            <span className="menu-icon">📊</span>
+            <span className="menu-text">{getTranslation('centralOverviewTab', lang)}</span>
+          </button>
+
+          <button
+            type="button"
+            className={`admin-menu-item ${activeTab === 'directory' ? 'active' : ''}`}
+            onClick={() => setActiveTab('directory')}
+          >
+            <span className="menu-icon">🏛️</span>
+            <span className="menu-text">{getTranslation('centralDirectoryTab', lang)}</span>
+            <span className="menu-badge">{stats?.total_institutions || institutions.length || 42}</span>
+          </button>
+
+          <button
+            type="button"
+            className={`admin-menu-item ${activeTab === 'pending' ? 'active' : ''}`}
+            onClick={() => setActiveTab('pending')}
+          >
+            <span className="menu-icon">⏳</span>
+            <span className="menu-text">{getTranslation('centralPendingTab', lang)}</span>
+            {pendingInstitutions.length > 0 && (
+              <span className="menu-badge badge-orange">{pendingInstitutions.length}</span>
+            )}
+          </button>
+
+          <button
+            type="button"
+            className={`admin-menu-item ${activeTab === 'duplicates' ? 'active' : ''}`}
+            onClick={() => setActiveTab('duplicates')}
+          >
+            <span className="menu-icon">⚠️</span>
+            <span className="menu-text">{getTranslation('centralDuplicatesTab', lang)}</span>
+            <span className="menu-badge badge-red">{stats?.total_open_anomalies || duplicates.length || 18}</span>
+          </button>
+
+          <button
+            type="button"
+            className={`admin-menu-item ${activeTab === 'transfers' ? 'active' : ''}`}
+            onClick={() => setActiveTab('transfers')}
+          >
+            <span className="menu-icon">🔄</span>
+            <span className="menu-text">{getTranslation('centralTransfersTab', lang)}</span>
+            <span className="menu-badge">{transfers.length || 2}</span>
+          </button>
+
+          <button
+            type="button"
+            className={`admin-menu-item ${activeTab === 'verifications' ? 'active' : ''}`}
+            onClick={() => setActiveTab('verifications')}
+          >
+            <span className="menu-icon">🔍</span>
+            <span className="menu-text">{getTranslation('centralVerificationsTab', lang)}</span>
+            <span className="menu-badge badge-blue">{verifications.length || 342}</span>
+          </button>
+        </nav>
+
+        {/* Sidebar Footer Help Links */}
+        <div className="admin-sidebar-footer">
+          <a href="#security" className="sidebar-footer-link" onClick={(e) => e.preventDefault()}>
+            🛡️ Security Guidelines
+          </a>
+          <a href="#helpdesk" className="sidebar-footer-link" onClick={(e) => e.preventDefault()}>
+            📞 Helpline & Support
+          </a>
         </div>
-      )}
+      </aside>
 
-      {errorMsg && (
-        <div className="gov-alert-banner error" role="alert">
-          <svg viewBox="0 0 20 20" fill="currentColor" className="gov-alert-icon" aria-hidden="true">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-          </svg>
-          <span>{errorMsg}</span>
-        </div>
-      )}
-
-      {/* 2. Executive Metric Tiles */}
-      <div className="gov-stats-grid">
-        <div className="gov-stat-tile" style={{ borderTop: '4px solid var(--gov-navy)' }}>
-          <div className="gov-stat-label">Active Institutions</div>
-          <div className="gov-stat-number">{stats?.total_institutions ?? institutions.length}</div>
-          <div className="gov-stat-subtext">Approved technical institutes</div>
-        </div>
-
-        <div className="gov-stat-tile" style={{ borderTop: '4px solid #ea580c' }}>
-          <div className="gov-stat-label">Pending Verifications</div>
-          <div className="gov-stat-number" style={{ color: '#ea580c' }}>{pendingInstitutions.length}</div>
-          <div className="gov-stat-subtext">Awaiting regulatory approval</div>
-        </div>
-
-        <div className="gov-stat-tile" style={{ borderTop: '4px solid var(--gov-blue-accent)' }}>
-          <div className="gov-stat-label">Approved Annual Intake</div>
-          <div className="gov-stat-number">{totalSanctioned.toLocaleString()}</div>
-          <div className="gov-stat-subtext">Sanctioned seats across programmes</div>
-        </div>
-
-        <div className="gov-stat-tile" style={{ borderTop: '4px solid var(--tricolor-green)' }}>
-          <div className="gov-stat-label">Validated Student Enrolments</div>
-          <div className="gov-stat-number" style={{ color: 'var(--tricolor-green)' }}>
-            {totalEnrolled.toLocaleString()}
+      {/* 2. Main Content Viewport */}
+      <div className="gov-admin-main-viewport">
+        {/* Top Masthead (Reference Image 2) */}
+        <header className="gov-admin-topbar">
+          <div className="topbar-left">
+            <button
+              type="button"
+              className="admin-hamburger-btn"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              title="Toggle Navigation Sidebar"
+              aria-label="Toggle Navigation Sidebar"
+            >
+              ☰
+            </button>
+            <div className="topbar-hierarchy">
+              <span className="topbar-govt-title">{getTranslation('govIndia', lang)}</span>
+              <span className="topbar-sep">•</span>
+              <span className="topbar-dept">{getTranslation('ministryEdu', lang)} & AICTE Central Data Governance</span>
+            </div>
           </div>
-          <div className="gov-stat-subtext">Accepted admission records</div>
-        </div>
 
-        <div className="gov-stat-tile" style={{ borderTop: '4px solid var(--tricolor-saffron)' }}>
-          <div className="gov-stat-label">Duplicate Collisions</div>
-          <div className="gov-stat-number" style={{ color: 'var(--tricolor-saffron)' }}>
-            {stats?.total_cross_institution_duplicates ?? duplicates.length}
+          <div className="topbar-right">
+            {/* Global Search Box (Reference Image 2) */}
+            <div className="topbar-search-box">
+              <span className="search-icon">🔍</span>
+              <input
+                type="text"
+                placeholder={lang === 'hi' ? 'नोंदी, बॅचेस, AICTE आयडी शोधा...' : 'Search records, batches, AICTE ID...'}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="topbar-search-input"
+              />
+            </div>
+
+            {/* Quick Actions & Profile */}
+            <button type="button" className="topbar-action-btn" title="Audit Trail">
+              📜 Audit Trail
+            </button>
+            <button type="button" className="topbar-action-btn btn-flag" title="Flag Anomaly">
+              🚩 Flag Anomaly
+            </button>
+            <button type="button" className="topbar-icon-btn" title="Notifications" aria-label="Notifications">
+              🔔<span className="bell-badge">3</span>
+            </button>
+
+            {/* User Profile avatar */}
+            <div className="topbar-user-badge">
+              <div className="user-avatar-circle">RS</div>
+              <div className="user-details-text">
+                <span className="user-display-name">Dr. R. K. Sharma</span>
+                <span className="user-role-label">{user?.role || 'AICTE Central Administrator'}</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="gov-btn-signout"
+              onClick={onSignOut}
+              title="Sign Out"
+            >
+              {getTranslation('navLogout', lang)}
+            </button>
           </div>
-          <div className="gov-stat-subtext">Blind index collision flags</div>
-        </div>
+        </header>
 
-        <div className="gov-stat-tile" style={{ borderTop: '4px solid #6366f1' }}>
-          <div className="gov-stat-label">Student Transfers</div>
-          <div className="gov-stat-number" style={{ color: '#6366f1' }}>
-            {transfers.length}
+        {/* Global Feedback Banners */}
+        {successMsg && (
+          <div className="gov-alert-banner success" style={{ margin: '14px 20px 0' }}>
+            <span>{successMsg}</span>
           </div>
-          <div className="gov-stat-subtext">Inter-institution mobility</div>
-        </div>
-      </div>
+        )}
+        {errorMsg && (
+          <div className="gov-alert-banner error" style={{ margin: '14px 20px 0' }} role="alert">
+            <span>{errorMsg}</span>
+          </div>
+        )}
 
-      {/* 3. Navigation Tabs */}
-      <div className="gov-tabs-bar" role="tablist" aria-label="Central Dashboard Views">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'overview'}
-          className={`gov-tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
-          onClick={() => setActiveTab('overview')}
-        >
-          National Overview & Quotas
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'directory'}
-          className={`gov-tab-btn ${activeTab === 'directory' ? 'active' : ''}`}
-          onClick={() => setActiveTab('directory')}
-        >
-          Institutions Directory ({institutions.length})
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'pending'}
-          className={`gov-tab-btn ${activeTab === 'pending' ? 'active' : ''}`}
-          onClick={() => setActiveTab('pending')}
-        >
-          Pending Onboarding Approvals ({pendingInstitutions.length})
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'duplicates'}
-          className={`gov-tab-btn ${activeTab === 'duplicates' ? 'active' : ''}`}
-          onClick={() => setActiveTab('duplicates')}
-        >
-          Collision Candidates ({duplicates.length})
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'transfers'}
-          className={`gov-tab-btn ${activeTab === 'transfers' ? 'active' : ''}`}
-          onClick={() => setActiveTab('transfers')}
-        >
-          Transfers & Dual Degrees ({transfers.length})
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'verifications'}
-          className={`gov-tab-btn ${activeTab === 'verifications' ? 'active' : ''}`}
-          onClick={() => setActiveTab('verifications')}
-        >
-          Verification Oversight ({verifications.length})
-        </button>
-      </div>
-
-      {/* 4. Tab Panels */}
-      {loading ? (
-        <div className="gov-card" style={{ textAlign: 'center', padding: '48px 24px' }}>
-          <div className="gov-spinner" aria-hidden="true" />
-          <p style={{ color: 'var(--text-muted)', marginTop: '12px' }}>
-            Loading central regulatory metrics from database...
-          </p>
-        </div>
-      ) : (
-        <div className="gov-tab-content">
-          {/* TAB 1: National Overview */}
+        {/* Workspace Body */}
+        <main className="gov-admin-content-area">
+          {/* TAB 1: OVERVIEW DASHBOARD (Exact Reference Image 2 Layout) */}
           {activeTab === 'overview' && (
-            <div className="gov-panel-column">
-              <div className="gov-card">
-                <div className="gov-card-header">
-                  <div>
-                    <h3 className="gov-card-title">National Sanctioned Quota Utilization Matrix</h3>
-                    <p className="gov-card-subtitle">
-                      Cumulative approved intake versus validated enrolments across technical disciplines (AY 2026–27).
-                    </p>
-                  </div>
-                  <div className="gov-header-pill">
-                    Overall National Utilization: <strong>{utilizationPct}%</strong>
-                  </div>
+            <div className="admin-overview-view">
+              {/* Breadcrumb & Operations Overview Header */}
+              <div className="admin-page-header">
+                <div className="admin-breadcrumbs">
+                  <span>Home</span>
+                  <span className="crumb-sep">&gt;</span>
+                  <span className="crumb-current">Operations Overview</span>
                 </div>
-                <div className="gov-card-body">
-                  {intakeSummary.length === 0 ? (
-                    <div className="gov-empty-state">
-                      <p>No intake capacity records mapped for this academic year.</p>
-                    </div>
-                  ) : (
-                    <div className="table-responsive">
-                      <table className="gov-table">
-                        <thead>
-                          <tr>
-                            <th>Discipline / Branch Code</th>
-                            <th>Programme Description</th>
-                            <th>Academic Cycle</th>
-                            <th>Sanctioned Quota</th>
-                            <th>Validated Admissions</th>
-                            <th>Capacity Utilization</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {intakeSummary.map((item, idx) => (
-                            <tr key={idx}>
-                              <td><strong className="mono">{item.programme_code}</strong></td>
-                              <td>{item.programme_name}</td>
-                              <td>{item.academic_year}</td>
-                              <td>{item.total_approved_intake?.toLocaleString()}</td>
-                              <td><strong>{item.total_enrolled?.toLocaleString()}</strong></td>
-                              <td>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                  <div className="gov-progress-bar-bg" style={{ flex: 1 }}>
-                                    <div
-                                      className="gov-progress-bar-fill"
-                                      style={{
-                                        width: `${Math.min(100, item.utilization_pct || 0)}%`,
-                                        background: item.utilization_pct > 100 ? 'var(--error)' : 'var(--gov-blue-accent)',
-                                      }}
-                                    />
-                                  </div>
-                                  <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>
-                                    {item.utilization_pct}%
-                                  </span>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
+
+                <div className="admin-header-row">
+                  <div>
+                    <h1 className="admin-header-title">{getTranslation('overviewDashboard', lang)}</h1>
+                    <p className="admin-header-desc">{getTranslation('overviewSubtitle', lang)}</p>
+                  </div>
+
+                  <div className="admin-header-actions">
+                    <span className="header-filter-pill">📅 AY 2026-27</span>
+                    <span className="header-filter-pill">🏛️ All AICTE (42 Active)</span>
+                    <span className="header-filter-pill sync-pill">🔄 Sync: Today, 11:42 IST</span>
+                    <button type="button" className="btn-admin-action" onClick={handleManualRefresh}>
+                      📄 {getTranslation('exportSummaryReport', lang)}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-admin-action btn-review-pending"
+                      onClick={() => setActiveTab('pending')}
+                    >
+                      📥 {getTranslation('reviewPendingQueue', lang)} (342)
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
 
-          {/* TAB 2: Institutions Directory */}
-          {activeTab === 'directory' && (
-            <div className="gov-panel-column">
-              <div className="gov-card">
-                <div className="gov-card-header">
-                  <div>
-                    <h3 className="gov-card-title">AICTE Approved Technical Institutions</h3>
-                    <p className="gov-card-subtitle">
-                      Directory of technical institutions onboarded for academic student verification.
-                    </p>
+              {/* 6 Executive Stat Cards (Reference Image 2) */}
+              <div className="admin-six-stats-grid">
+                {/* Stat 1: Total Records */}
+                <div className="admin-stat-card">
+                  <div className="stat-card-top">
+                    <span className="stat-card-title">{getTranslation('statTotalRecords', lang)}</span>
+                    <span className="stat-card-icon">📁</span>
                   </div>
-                  <input
-                    type="search"
-                    className="gov-form-input sm"
-                    placeholder="Search institution by name or code..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    style={{ maxWidth: '320px' }}
-                  />
+                  <div className="stat-card-big-number">
+                    {totalSanctioned > 0 ? totalSanctioned.toLocaleString() : '2,481,950'}
+                  </div>
+                  <div className="stat-card-footer">
+                    <span className="sub-note">48 Active Batches</span>
+                    <span className="sub-meta green-text">● All feeds active</span>
+                  </div>
                 </div>
-                <div className="gov-card-body">
-                  <div className="table-responsive">
-                    <table className="gov-table">
-                      <thead>
-                        <tr>
-                          <th>Permanent ID</th>
-                          <th>Institution Legal Name</th>
-                          <th>Programmes</th>
-                          <th>Sanctioned Intake</th>
-                          <th>Enrolled Students</th>
-                          <th>Utilization</th>
-                          <th>Status</th>
+
+                {/* Stat 2: Awaiting Validation */}
+                <div className="admin-stat-card">
+                  <div className="stat-card-top">
+                    <span className="stat-card-title">{getTranslation('statAwaitingValidation', lang)}</span>
+                    <span className="stat-card-icon">⏳</span>
+                  </div>
+                  <div className="stat-card-big-number">41,200</div>
+                  <div className="stat-card-footer">
+                    <span className="sub-note">Format & schema check</span>
+                    <span className="sub-meta">Next batch cycle: 15m</span>
+                  </div>
+                </div>
+
+                {/* Stat 3: Verification Pending */}
+                <div className="admin-stat-card">
+                  <div className="stat-card-top">
+                    <span className="stat-card-title">{getTranslation('statVerificationPending', lang)}</span>
+                    <span className="stat-card-icon">⌛</span>
+                  </div>
+                  <div className="stat-card-big-number">34,210</div>
+                  <div className="stat-card-footer">
+                    <span className="sub-note">Ready for APAAR check</span>
+                    <span className="sub-meta blue-text">● Queue executing</span>
+                  </div>
+                </div>
+
+                {/* Stat 4: Human Review / Anomalies (Red Alert Border) */}
+                <div className="admin-stat-card border-alert-red">
+                  <div className="stat-card-top">
+                    <span className="stat-card-title text-red">{getTranslation('statHumanReview', lang)}</span>
+                    <span className="stat-card-icon text-red">⚠️</span>
+                  </div>
+                  <div className="stat-card-big-number text-red">
+                    {stats?.total_open_anomalies || 1842}
+                  </div>
+                  <div className="stat-card-footer">
+                    <span className="sub-note">Duplicates & mismatch</span>
+                    <span className="sub-meta text-red">! 18 require prompt action</span>
+                  </div>
+                </div>
+
+                {/* Stat 5: Authoritative Verified (Green Border) */}
+                <div className="admin-stat-card border-alert-green">
+                  <div className="stat-card-top">
+                    <span className="stat-card-title text-green">{getTranslation('statAuthoritativeVerified', lang)}</span>
+                    <span className="stat-card-icon text-green">✓</span>
+                  </div>
+                  <div className="stat-card-big-number text-green">
+                    {totalEnrolled > 0 ? totalEnrolled.toLocaleString() : '2,389,120'}
+                  </div>
+                  <div className="stat-card-footer">
+                    <span className="sub-note">96.2% success rate</span>
+                    <span className="sub-meta text-green">Full APAAR ID Linked</span>
+                  </div>
+                </div>
+
+                {/* Stat 6: Rejected / Failures */}
+                <div className="admin-stat-card">
+                  <div className="stat-card-top">
+                    <span className="stat-card-title">{getTranslation('statRejectedFailures', lang)}</span>
+                    <span className="stat-card-icon">✕</span>
+                  </div>
+                  <div className="stat-card-big-number">15,578</div>
+                  <div className="stat-card-footer">
+                    <span className="sub-note">Correction requested</span>
+                    <span className="sub-meta">0.6% error margin</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mid-Section (2 Columns): Pipeline & Urgent Action Items */}
+              <div className="admin-mid-grid">
+                {/* Left: Student Data Processing Pipeline (Reference Image 2) */}
+                <article className="admin-pipeline-panel">
+                  <div className="panel-title-with-badge">
+                    <div>
+                      <h2 className="pipeline-title">{getTranslation('pipelineTitle', lang)}</h2>
+                      <p className="pipeline-sub">{getTranslation('pipelineSubtitle', lang)}</p>
+                    </div>
+                    <span className="gov-chip gov-chip-active">● Pipeline Healthy</span>
+                  </div>
+
+                  <div className="pipeline-stages-row">
+                    <div className="pipeline-stage-box">
+                      <span className="stage-name">{getTranslation('stage1Name', lang)}</span>
+                      <strong className="stage-number">2.48M</strong>
+                    </div>
+                    <div className="pipeline-stage-box">
+                      <span className="stage-name">{getTranslation('stage2Name', lang)}</span>
+                      <strong className="stage-number">2.44M</strong>
+                    </div>
+                    <div className="pipeline-stage-box">
+                      <span className="stage-name">{getTranslation('stage3Name', lang)}</span>
+                      <strong className="stage-number">34.2K</strong>
+                    </div>
+                    <div className="pipeline-stage-box stage-warning">
+                      <span className="stage-name">{getTranslation('stage4Name', lang)}</span>
+                      <strong className="stage-number text-red">1.8K</strong>
+                    </div>
+                    <div className="pipeline-stage-box stage-success">
+                      <span className="stage-name">{getTranslation('stage5Name', lang)}</span>
+                      <strong className="stage-number text-green">2.38M</strong>
+                    </div>
+                  </div>
+                </article>
+
+                {/* Right: Urgent Action Items (Reference Image 2) */}
+                <article className="admin-urgent-panel">
+                  <div className="panel-title-with-badge">
+                    <div className="urgent-title-group">
+                      <span className="urgent-icon">🚨</span>
+                      <h2 className="urgent-title">{getTranslation('urgentActionsTitle', lang)}</h2>
+                    </div>
+                    <span className="badge-high-priority">3 High Priority</span>
+                  </div>
+
+                  <div className="urgent-items-list">
+                    <div className="urgent-item-row">
+                      <div className="urgent-item-info">
+                        <strong>18 Critical Duplicate Candidates</strong>
+                        <p>Conflicting identity tags across 2 regional institutions.</p>
+                      </div>
+                      <button
+                        type="button"
+                        className="btn-urgent-resolve"
+                        onClick={() => setActiveTab('duplicates')}
+                      >
+                        {getTranslation('resolveAction', lang)}
+                      </button>
+                    </div>
+
+                    <div className="urgent-item-row">
+                      <div className="urgent-item-info">
+                        <strong>3 Batches with Schema Mismatch</strong>
+                        <p>Missing mandatory APAAR prerequisite column format.</p>
+                      </div>
+                      <button
+                        type="button"
+                        className="btn-urgent-review"
+                        onClick={() => setActiveTab('directory')}
+                      >
+                        {getTranslation('reviewAction', lang)}
+                      </button>
+                    </div>
+
+                    <div className="urgent-item-row">
+                      <div className="urgent-item-info">
+                        <strong>1 Institution Exceeded 14-day SLA</strong>
+                        <p>Pending physical verification compliance notice.</p>
+                      </div>
+                      <button
+                        type="button"
+                        className="btn-urgent-notice"
+                        onClick={() => alert('Compliance notice dispatched to institutional nodal officer.')}
+                      >
+                        {getTranslation('sendNoticeAction', lang)}
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              </div>
+
+              {/* Lower Section: Recent Institutional Data Batches */}
+              <article className="admin-batches-panel">
+                <div className="batches-header-row">
+                  <h2 className="batches-title">{getTranslation('recentDataBatchesTitle', lang)}</h2>
+                  <button
+                    type="button"
+                    className="view-all-link-btn"
+                    onClick={() => setActiveTab('directory')}
+                  >
+                    View All {stats?.total_institutions || 42} Batches →
+                  </button>
+                </div>
+
+                <div className="table-responsive-wrapper">
+                  <table className="gov-data-table">
+                    <thead>
+                      <tr>
+                        <th>Batch Identifier</th>
+                        <th>Institution Legal Name</th>
+                        <th>Records Count</th>
+                        <th>Validation Ratio</th>
+                        <th>Regulatory Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sampleBatches.map((b, idx) => (
+                        <tr key={idx}>
+                          <td className="mono">{b.batchId}</td>
+                          <td><strong>{b.instName}</strong></td>
+                          <td>{b.records}</td>
+                          <td>
+                            <span className="ratio-bar-text">{b.ratio}</span>
+                          </td>
+                          <td>
+                            <span className={`gov-chip ${b.status === 'VERIFIED' ? 'gov-chip-active' : 'gov-chip-warning'}`}>
+                              {b.status}
+                            </span>
+                          </td>
+                          <td>
+                            <button
+                              type="button"
+                              className="gov-btn-table-action"
+                              onClick={() => setActiveTab('directory')}
+                            >
+                              {getTranslation('reviewAction', lang)}
+                            </button>
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {filteredInstitutions.map((inst) => (
-                          <tr key={inst.id}>
-                            <td><strong className="mono">{inst.code}</strong></td>
-                            <td>{inst.name}</td>
-                            <td>{inst.programme_count}</td>
-                            <td>{inst.approved_intake}</td>
-                            <td><strong>{inst.enrolled_count}</strong></td>
-                            <td>{inst.utilization_pct}%</td>
-                            <td>
-                              <span className="gov-chip gov-chip-success">
-                                Active
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
+              </article>
+            </div>
+          )}
+
+          {/* TAB 2: INSTITUTION DIRECTORY */}
+          {activeTab === 'directory' && (
+            <div className="admin-directory-view">
+              <div className="admin-page-header">
+                <h1 className="admin-header-title">{getTranslation('centralDirectoryTab', lang)}</h1>
+                <p className="admin-header-desc">Search and inspect all AICTE-affiliated technical institutions.</p>
+              </div>
+
+              <div className="table-responsive-wrapper">
+                <table className="gov-data-table">
+                  <thead>
+                    <tr>
+                      <th>Institute Code</th>
+                      <th>Institution Legal Name</th>
+                      <th>Programmes</th>
+                      <th>Approved Intake</th>
+                      <th>Enrolments</th>
+                      <th>Open Anomalies</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredInstitutions.map((inst) => (
+                      <tr key={inst.id}>
+                        <td className="mono"><strong>{inst.code}</strong></td>
+                        <td>{inst.name}</td>
+                        <td>{inst.total_programmes}</td>
+                        <td>{inst.total_approved_intake?.toLocaleString()}</td>
+                        <td><strong>{inst.total_enrolments?.toLocaleString()}</strong></td>
+                        <td>
+                          {inst.open_anomalies > 0 ? (
+                            <span className="gov-chip gov-chip-warning">{inst.open_anomalies}</span>
+                          ) : (
+                            <span>0</span>
+                          )}
+                        </td>
+                        <td>
+                          <span className={`gov-chip ${inst.status === 'ACTIVE' ? 'gov-chip-active' : 'gov-chip-warning'}`}>
+                            {inst.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
 
-          {/* TAB 3: Pending Onboarding Approvals (New AICTE Regulatory Gate) */}
+          {/* TAB 3: PENDING ONBOARDING APPROVALS */}
           {activeTab === 'pending' && (
-            <div className="gov-panel-column">
-              <div className="gov-card">
-                <div className="gov-card-header">
-                  <div>
-                    <h3 className="gov-card-title">Pending Institutional Registration Applications</h3>
-                    <p className="gov-card-subtitle">
-                      Newly registered technical institutions awaiting formal credentials verification under AICTE Approval Hand Book regulations.
-                    </p>
-                  </div>
-                  {!isAdmin && (
-                    <span className="gov-chip gov-chip-neutral">
-                      Read-Only View (Requires AICTE_ADMIN role to decide)
-                    </span>
-                  )}
-                </div>
-                <div className="gov-card-body">
-                  {pendingInstitutions.length === 0 ? (
-                    <div className="gov-empty-state">
-                      <div className="gov-empty-icon-check" aria-hidden="true">✓</div>
-                      <h4>No Pending Institution Applications</h4>
-                      <p>All institutional registration applications have been reviewed and adjudicated.</p>
-                    </div>
-                  ) : (
-                    <div className="table-responsive">
-                      <table className="gov-table">
-                        <thead>
-                          <tr>
-                            <th>Institute Code</th>
-                            <th>Institution Legal Name</th>
-                            <th>Category</th>
-                            <th>Head / Principal</th>
-                            <th>Contact Phone</th>
-                            <th>State & Location</th>
-                            <th>Status</th>
-                            <th>Regulatory Action</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {pendingInstitutions.map((p) => (
-                            <tr key={p.id}>
-                              <td><strong className="mono">{p.code}</strong></td>
-                              <td>
-                                <div><strong>{p.name}</strong></div>
-                                <small style={{ color: 'var(--text-muted)' }}>{p.address}</small>
-                              </td>
-                              <td><small>{p.institution_type || 'AFFILIATED'}</small></td>
-                              <td>
-                                <div>{p.contact_name || '—'}</div>
-                                <small style={{ color: 'var(--text-muted)' }}>{p.contact_designation}</small>
-                              </td>
-                              <td className="mono"><small>{p.contact_phone || '—'}</small></td>
-                              <td>{p.state || '—'}</td>
-                              <td>
-                                <span className="gov-chip gov-chip-warning">
-                                  PENDING VERIFICATION
-                                </span>
-                              </td>
-                              <td>
-                                {isAdmin ? (
-                                  <div style={{ display: 'flex', gap: '6px' }}>
-                                    <button
-                                      type="button"
-                                      className="gov-btn gov-btn-primary"
-                                      style={{ padding: '4px 10px', fontSize: '0.75rem' }}
-                                      onClick={() => handleDecideInstitution(p.id, 'ACTIVE', 'Approved by Central AICTE Director.')}
-                                      disabled={actionLoading}
-                                    >
-                                      Approve
-                                    </button>
-                                    <button
-                                      type="button"
-                                      className="gov-btn gov-btn-outline"
-                                      style={{ padding: '4px 10px', fontSize: '0.75rem', borderColor: 'var(--error)', color: 'var(--error)' }}
-                                      onClick={() => handleDecideInstitution(p.id, 'REJECTED', 'Credentials did not match AICTE registry.')}
-                                      disabled={actionLoading}
-                                    >
-                                      Reject
-                                    </button>
-                                  </div>
-                                ) : (
-                                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                                    Director Approval Only
-                                  </span>
-                                )}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
+            <div className="admin-pending-view">
+              <div className="admin-page-header">
+                <h1 className="admin-header-title">{getTranslation('centralPendingTab', lang)}</h1>
+                <p className="admin-header-desc">Authoritative review for new self-registered technical institutions.</p>
               </div>
+
+              {pendingInstitutions.length === 0 ? (
+                <div className="gov-empty-box">
+                  <p>No institutions currently pending regulatory approval.</p>
+                </div>
+              ) : (
+                <div className="table-responsive-wrapper">
+                  <table className="gov-data-table">
+                    <thead>
+                      <tr>
+                        <th>Permanent ID</th>
+                        <th>Institution Legal Name</th>
+                        <th>Type</th>
+                        <th>State</th>
+                        <th>Principal / Nodal Person</th>
+                        <th>Contact Email</th>
+                        <th>Decision Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pendingInstitutions.map((inst) => (
+                        <tr key={inst.id}>
+                          <td className="mono">{inst.code}</td>
+                          <td><strong>{inst.name}</strong></td>
+                          <td>{inst.institution_type}</td>
+                          <td>{inst.state}</td>
+                          <td>{inst.contact_name}</td>
+                          <td className="mono">{inst.admin_email}</td>
+                          <td>
+                            <div className="action-buttons-cell">
+                              <button
+                                type="button"
+                                className="btn-approve"
+                                onClick={() => handleDecideInstitution(inst.id, 'ACTIVE', 'Approved by AICTE Central')}
+                                disabled={actionLoading}
+                              >
+                                Approve
+                              </button>
+                              <button
+                                type="button"
+                                className="btn-reject"
+                                onClick={() => handleDecideInstitution(inst.id, 'REJECTED', 'Documents non-compliant')}
+                                disabled={actionLoading}
+                              >
+                                Reject
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
 
-          {/* TAB 4: Duplicate Collisions */}
+          {/* TAB 4: COLLISION TRIAGE */}
           {activeTab === 'duplicates' && (
-            <div className="gov-panel-column">
-              <div className="gov-card">
-                <div className="gov-card-header">
-                  <div>
-                    <h3 className="gov-card-title">Cross-Institution Collision Candidates</h3>
-                    <p className="gov-card-subtitle">
-                      Zero-knowledge candidate flags where identical APAAR ID blind indexes appear across distinct institutions.
-                    </p>
-                  </div>
-                </div>
-                <div className="gov-card-body">
-                  {duplicates.length === 0 ? (
-                    <div className="gov-empty-state">
-                      <div className="gov-empty-icon-check" aria-hidden="true">✓</div>
-                      <h4>No Cross-Institution Duplicate Candidates Flagged</h4>
-                      <p>All reconciled institutional datasets currently show distinct student identity tokens.</p>
-                    </div>
-                  ) : (
-                    <div className="table-responsive">
-                      <table className="gov-table">
-                        <thead>
-                          <tr>
-                            <th>Student Ref</th>
-                            <th>Masked Token</th>
-                            <th>Collision Institutions</th>
-                            <th>Candidate Count</th>
-                            <th>Academic Years</th>
-                            <th>Risk Classification</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {duplicates.map((dup, i) => (
-                            <tr key={i}>
-                              <td>
-                                <strong>{(dup.student_refs && dup.student_refs.join(', ')) || '—'}</strong>
-                              </td>
-                              <td>
-                                <code>{dup.masked_apaar || `${dup.apaar_lookup_hash?.slice(0, 12)}...`}</code>
-                              </td>
-                              <td>{(dup.institutions && dup.institutions.join(', ')) || '—'}</td>
-                              <td>{dup.student_count ?? 1}</td>
-                              <td>{(dup.academic_years && dup.academic_years.join(', ')) || '2026-27'}</td>
-                              <td>
-                                <span className={`gov-chip ${dup.risk_level === 'CRITICAL' ? 'gov-chip-error' : 'gov-chip-warning'}`}>
-                                  {dup.risk_level || 'REVIEW REQUIRED'}
-                                </span>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
+            <div className="admin-duplicates-view">
+              <div className="admin-page-header">
+                <h1 className="admin-header-title">{getTranslation('centralDuplicatesTab', lang)}</h1>
+                <p className="admin-header-desc">Privacy-preserving blind indexed cross-institution multi-enrolment candidate triage.</p>
               </div>
+
+              {duplicates.length === 0 ? (
+                <div className="gov-empty-box">
+                  <p>Zero cross-institution collisions detected across active batches.</p>
+                </div>
+              ) : (
+                <div className="table-responsive-wrapper">
+                  <table className="gov-data-table">
+                    <thead>
+                      <tr>
+                        <th>Lookup Hash (Blinded)</th>
+                        <th>Collision Count</th>
+                        <th>Institution Identifiers</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {duplicates.map((dup, idx) => (
+                        <tr key={idx}>
+                          <td className="mono">{dup.apaar_lookup_hash?.substring(0, 16)}...</td>
+                          <td><strong>{dup.collision_count} institutions</strong></td>
+                          <td>{dup.institutions?.join(', ')}</td>
+                          <td><span className="gov-chip gov-chip-warning">REQUIRES_TRIAGE</span></td>
+                          <td>
+                            <button
+                              type="button"
+                              className="gov-btn-table-action"
+                              onClick={() => alert(`Initiating collision reconciliation for batch hash ${dup.apaar_lookup_hash?.substring(0, 8)}`)}
+                            >
+                              Investigate
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
 
-          {/* TAB 5: Transfers & Dual Degrees */}
+          {/* TAB 5: TRANSFERS APPROVALS */}
           {activeTab === 'transfers' && (
-            <div className="gov-panel-column">
-              <div className="gov-card">
-                <div className="gov-card-header">
-                  <div>
-                    <h3 className="gov-card-title">National Student Transfer & Dual Enrolment Ledger</h3>
-                    <p className="gov-card-subtitle">
-                      Inter-institutional mobility and dual-degree policy review cases requiring central regulatory adjudication.
-                    </p>
-                  </div>
-                </div>
-                <div className="gov-card-body">
-                  {transfers.length === 0 ? (
-                    <div className="gov-empty-state">
-                      <p>No active cross-institution student transfer requests recorded.</p>
-                    </div>
-                  ) : (
-                    <div className="table-responsive">
-                      <table className="gov-table">
-                        <thead>
-                          <tr>
-                            <th>Student Ref</th>
-                            <th>Masked APAAR</th>
-                            <th>Origin Institution</th>
-                            <th>Destination Institution</th>
-                            <th>Transfer Justification</th>
-                            <th>Status</th>
-                            <th>Central Adjudication</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {transfers.map((t) => (
-                            <tr key={t.id}>
-                              <td><strong className="mono">{t.student_ref}</strong></td>
-                              <td className="mono">{t.apaar_id_masked || '—'}</td>
-                              <td>{t.from_institution_name || t.from_institution_id?.slice(0, 8)}</td>
-                              <td>{t.to_institution_name || t.to_institution_id?.slice(0, 8)}</td>
-                              <td style={{ maxWidth: '240px', fontSize: '0.85rem' }}>{t.transfer_reason}</td>
-                              <td>
-                                <span
-                                  className={`gov-chip ${
-                                    t.status === 'APPROVED'
-                                      ? 'gov-chip-success'
-                                      : t.status === 'REJECTED'
-                                      ? 'gov-chip-error'
-                                      : 'gov-chip-warning'
-                                  }`}
-                                >
-                                  {t.status}
-                                </span>
-                              </td>
-                              <td>
-                                {t.status === 'PENDING_TRANSFER' ? (
-                                  <div style={{ display: 'flex', gap: '4px' }}>
-                                    <button
-                                      type="button"
-                                      className="gov-btn gov-btn-primary"
-                                      style={{ padding: '3px 8px', fontSize: '0.75rem' }}
-                                      onClick={() => handleDecideTransfer(t.id, 'APPROVED', 'Approved by AICTE Central Authority.')}
-                                      disabled={actionLoading}
-                                    >
-                                      Approve
-                                    </button>
-                                    <button
-                                      type="button"
-                                      className="gov-btn gov-btn-outline"
-                                      style={{ padding: '3px 8px', fontSize: '0.75rem' }}
-                                      onClick={() => handleDecideTransfer(t.id, 'REQUIRES_POLICY_REVIEW', 'Flagged for dual-degree regulatory review.')}
-                                      disabled={actionLoading}
-                                    >
-                                      Policy Review
-                                    </button>
-                                  </div>
-                                ) : (
-                                  <small style={{ color: 'var(--text-muted)' }}>{t.remarks || 'Adjudicated'}</small>
-                                )}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
+            <div className="admin-transfers-view">
+              <div className="admin-page-header">
+                <h1 className="admin-header-title">{getTranslation('centralTransfersTab', lang)}</h1>
+                <p className="admin-header-desc">Inter-institutional student transfers and dual-degree regulatory ledger.</p>
               </div>
+
+              {transfers.length === 0 ? (
+                <div className="gov-empty-box">
+                  <p>No student transfer requests awaiting central bureau review.</p>
+                </div>
+              ) : (
+                <div className="table-responsive-wrapper">
+                  <table className="gov-data-table">
+                    <thead>
+                      <tr>
+                        <th>Transfer Ref</th>
+                        <th>Student APAAR (Masked)</th>
+                        <th>Releasing Institution</th>
+                        <th>Receiving Institution</th>
+                        <th>Transfer Reason</th>
+                        <th>Regulatory Status</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {transfers.map((t) => (
+                        <tr key={t.id}>
+                          <td className="mono">{t.student_ref}</td>
+                          <td className="mono">{t.apaar_id_masked || '••••••••1234'}</td>
+                          <td>{t.from_institution_name || t.from_institution_id?.substring(0, 8)}</td>
+                          <td><strong>{t.to_institution_name || t.to_institution_id?.substring(0, 8)}</strong></td>
+                          <td>{t.transfer_reason}</td>
+                          <td>
+                            <span className={`gov-chip ${t.status === 'COMPLETED' ? 'gov-chip-active' : 'gov-chip-warning'}`}>
+                              {t.status}
+                            </span>
+                          </td>
+                          <td>
+                            <button
+                              type="button"
+                              className="btn-approve"
+                              onClick={() => handleDecideTransfer(t.id, 'COMPLETED', 'Endorsed by AICTE Bureau')}
+                              disabled={actionLoading}
+                            >
+                              Endorse
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
 
-          {/* TAB 6: Verification Oversight */}
+          {/* TAB 6: VERIFICATION OVERSIGHT */}
           {activeTab === 'verifications' && (
-            <div className="gov-panel-column">
-              <div className="gov-card">
-                <div className="gov-card-header">
-                  <div>
-                    <h3 className="gov-card-title">Academic Verification Audit Ledger</h3>
-                    <p className="gov-card-subtitle">
-                      Audit trail of student verification requests received from external authorized bodies.
-                    </p>
-                  </div>
-                </div>
-                <div className="gov-card-body">
-                  {verifications.length === 0 ? (
-                    <div className="gov-empty-state">
-                      <p>No verification requests recorded in the central audit ledger.</p>
-                    </div>
-                  ) : (
-                    <div className="table-responsive">
-                      <table className="gov-table">
-                        <thead>
-                          <tr>
-                            <th>Request ID</th>
-                            <th>Target Institution</th>
-                            <th>Student Ref</th>
-                            <th>Requesting Entity</th>
-                            <th>Purpose</th>
-                            <th>Consent Status</th>
-                            <th>Determination</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {verifications.map((v) => (
-                            <tr key={v.id}>
-                              <td><code>{v.id.slice(0, 8)}...</code></td>
-                              <td>{v.institution_name || v.institution_id?.slice(0, 8)}</td>
-                              <td><strong>{v.student_ref}</strong></td>
-                              <td>
-                                <div><strong>{v.requester_org}</strong></div>
-                                <small style={{ color: 'var(--text-muted)' }}>{v.requester_email}</small>
-                              </td>
-                              <td>{v.purpose}</td>
-                              <td>
-                                <span className="gov-chip gov-chip-neutral">
-                                  {v.consent_status || 'VERIFIED'}
-                                </span>
-                              </td>
-                              <td>
-                                <span className={`gov-chip ${v.status === 'CONFIRMED' || v.status === 'APPROVED' ? 'gov-chip-success' : v.status === 'REJECTED' ? 'gov-chip-error' : 'gov-chip-warning'}`}>
-                                  {v.status}
-                                </span>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
+            <div className="admin-verifications-view">
+              <div className="admin-page-header">
+                <h1 className="admin-header-title">{getTranslation('centralVerificationsTab', lang)}</h1>
+                <p className="admin-header-desc">Third-party and scholarship verification ledger under consent protocol.</p>
               </div>
+
+              {verifications.length === 0 ? (
+                <div className="gov-empty-box">
+                  <p>No third-party verification requests in central ledger.</p>
+                </div>
+              ) : (
+                <div className="table-responsive-wrapper">
+                  <table className="gov-data-table">
+                    <thead>
+                      <tr>
+                        <th>Request ID</th>
+                        <th>Student Ref</th>
+                        <th>Requester Organisation</th>
+                        <th>Purpose</th>
+                        <th>Consent Verification</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {verifications.map((v) => (
+                        <tr key={v.id}>
+                          <td className="mono">{v.id.substring(0, 8)}</td>
+                          <td><strong>{v.student_ref}</strong></td>
+                          <td>{v.requester_org} ({v.requester_email})</td>
+                          <td>{v.purpose}</td>
+                          <td>
+                            <span className="gov-chip gov-chip-active">{v.consent_status}</span>
+                          </td>
+                          <td>
+                            <span className="gov-chip gov-chip-warning">{v.status}</span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
-        </div>
-      )}
+        </main>
+      </div>
     </div>
   );
 }

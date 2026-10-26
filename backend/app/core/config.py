@@ -32,9 +32,10 @@ class Settings:
         self.MAX_UPLOAD_SIZE_BYTES: int = int(os.getenv("MAX_UPLOAD_SIZE_BYTES", "5242880")) # 5MB
         self.MAX_UPLOAD_ROWS: int = int(os.getenv("MAX_UPLOAD_ROWS", "10000"))
 
-        # CORS Origins
+        # CORS Origins & Origin Regex for Vercel/Render deployments
         raw_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173")
         self.CORS_ORIGINS: List[str] = [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
+        self.CORS_ORIGIN_REGEX: str = os.getenv("CORS_ORIGIN_REGEX", r"^https:\/\/.*\.vercel\.app$").strip()
 
         # Supabase Auth Configuration (Future / Integration)
         self.SUPABASE_PROJECT_URL: str = os.getenv("SUPABASE_PROJECT_URL", "").strip()

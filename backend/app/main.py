@@ -59,11 +59,17 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Restrictive CORS configuration for frontend
+# Restrictive CORS configuration for frontend (supports local dev and Vercel deployments)
+allow_credentials = True
+cors_origins = settings.CORS_ORIGINS
+if "*" in cors_origins:
+    allow_credentials = False
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
-    allow_credentials=True,
+    allow_origins=cors_origins,
+    allow_origin_regex=settings.CORS_ORIGIN_REGEX if settings.CORS_ORIGIN_REGEX else None,
+    allow_credentials=allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )

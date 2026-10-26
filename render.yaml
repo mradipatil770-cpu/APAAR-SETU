@@ -1,0 +1,44 @@
+# =============================================================================
+# Render Blueprint Specification for APAARSetu Backend
+# Doc: https://render.com/docs/blueprint-spec
+# =============================================================================
+services:
+  - type: web
+    name: apaarsetu-backend
+    runtime: python
+    rootDir: backend
+    plan: free
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/v1/health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: ENVIRONMENT
+        value: production
+      - key: TESTING
+        value: "false"
+      - key: CORS_ORIGIN_REGEX
+        value: "^https:\\/\\/.*\\.vercel\\.app$"
+      - key: MAX_UPLOAD_SIZE_BYTES
+        value: "5242880"
+      - key: MAX_UPLOAD_ROWS
+        value: "10000"
+      # Secure environment variables prompted on Render dashboard during creation
+      - key: DATABASE_URL
+        sync: false
+      - key: AES_ENCRYPTION_KEY
+        sync: false
+      - key: HMAC_SEARCH_KEY
+        sync: false
+      - key: SUPABASE_PROJECT_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_JWT_SECRET
+        sync: false
+      - key: SUPABASE_JWT_AUDIENCE
+        value: authenticated
+

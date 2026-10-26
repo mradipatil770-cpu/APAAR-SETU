@@ -1,39 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { getTranslation } from '../i18n/translations';
 
 export default function GovernmentHeader({
   currentUser,
   onSignIn,
+  onRegister,
   onSignOut,
   onGoHome,
+  activeNav = 'home',
+  onNavClick,
   lang = 'en',
   onToggleLang,
 }) {
   const [fontSizeLevel, setFontSizeLevel] = useState(0); // -1: small, 0: default, 1: large
-  const [currentTime, setCurrentTime] = useState('');
-
-  useEffect(() => {
-    const updateClock = () => {
-      const now = new Date();
-      setCurrentTime(
-        now.toLocaleDateString(lang === 'hi' ? 'hi-IN' : 'en-IN', {
-          day: 'numeric',
-          month: 'short',
-          year: 'numeric',
-        }) +
-          ' | ' +
-          now.toLocaleTimeString('en-IN', {
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: true,
-          })
-      );
-    };
-    updateClock();
-    const timer = setInterval(updateClock, 1000);
-    return () => clearInterval(timer);
-  }, [lang]);
 
   const handleFontChange = (level) => {
     setFontSizeLevel(level);
@@ -47,126 +26,192 @@ export default function GovernmentHeader({
     }
   };
 
-  return (
-    <header className="gov-portal-header" role="banner">
-      {/* 1. Restrained Indian Tricolor Accent Strip */}
-      <div className="gov-tricolor-strip" aria-hidden="true" />
+  const handleNavItemClick = (itemKey) => {
+    if (onNavClick) {
+      onNavClick(itemKey);
+    } else if (itemKey === 'home') {
+      if (onGoHome) onGoHome();
+    } else {
+      const el = document.getElementById(itemKey);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  };
 
-      {/* 2. Top Utility & Accessibility Bar */}
-      <div className="gov-top-utility">
-        <div className="gov-top-utility-inner">
-          <div className="gov-top-utility-left">
-            <span className="gov-utility-portal-title">{getTranslation('govIndia', lang)}</span>
-            <span className="gov-utility-separator" aria-hidden="true">•</span>
-            <span>{getTranslation('ministryEdu', lang)}</span>
-            <span className="gov-utility-separator" aria-hidden="true">•</span>
-            <span>Academic Session 2026–27</span>
+  return (
+    <header className="gov-official-header-root" role="banner">
+      {/* 1. Top Utility Strip (Exact dark blue matching reference screenshot) */}
+      <div className="gov-top-bar">
+        <div className="gov-top-bar-inner">
+          <div className="gov-top-bar-left">
+            <span className="gov-hindi-ministry-title">
+              {getTranslation('landingGovIndiaTop', lang)}
+            </span>
           </div>
 
-          <div className="gov-top-utility-right">
-            <time className="gov-utility-clock" aria-label="Current portal time">{currentTime}</time>
-            <span className="gov-utility-separator" aria-hidden="true">•</span>
-            
-            {/* Accessibility Controls: Font Resizing */}
-            <div className="gov-accessibility-controls" aria-label="Text size adjustment">
-              <span className="gov-access-label" id="text-size-label">{getTranslation('textSize', lang)}:</span>
+          <div className="gov-top-bar-right">
+            {/* Font size accessibility adjustment */}
+            <div className="gov-font-size-group" aria-label="Text size options">
               <button
                 type="button"
-                className={`gov-access-btn ${fontSizeLevel === -1 ? 'active' : ''}`}
-                aria-labelledby="text-size-label"
-                aria-pressed={fontSizeLevel === -1}
-                title="Decrease font size"
+                className={`gov-font-btn ${fontSizeLevel === -1 ? 'active' : ''}`}
                 onClick={() => handleFontChange(-1)}
+                title="Decrease font size"
               >
                 A-
               </button>
               <button
                 type="button"
-                className={`gov-access-btn ${fontSizeLevel === 0 ? 'active' : ''}`}
-                aria-labelledby="text-size-label"
-                aria-pressed={fontSizeLevel === 0}
-                title="Default font size"
+                className={`gov-font-btn ${fontSizeLevel === 0 ? 'active' : ''}`}
                 onClick={() => handleFontChange(0)}
+                title="Default font size"
               >
                 A
               </button>
               <button
                 type="button"
-                className={`gov-access-btn ${fontSizeLevel === 1 ? 'active' : ''}`}
-                aria-labelledby="text-size-label"
-                aria-pressed={fontSizeLevel === 1}
-                title="Increase font size"
+                className={`gov-font-btn ${fontSizeLevel === 1 ? 'active' : ''}`}
                 onClick={() => handleFontChange(1)}
+                title="Increase font size"
               >
                 A+
               </button>
             </div>
 
-            <span className="gov-utility-separator" aria-hidden="true">•</span>
+            <span className="gov-top-sep" aria-hidden="true">|</span>
 
-            {/* Bilingual Language Switcher Toggle */}
+            {/* Screen Reader Access link/button */}
             <button
               type="button"
-              className="gov-lang-indicator-btn"
-              onClick={onToggleLang}
-              title={lang === 'en' ? 'Switch to हिन्दी' : 'Switch to English'}
-              aria-label="Toggle language between English and Hindi"
+              className="gov-screen-reader-btn"
+              onClick={() => alert(getTranslation('screenReader', lang) + ': Enabled')}
+              title={getTranslation('screenReader', lang)}
             >
-              <svg viewBox="0 0 20 20" fill="currentColor" style={{ width: '14px', height: '14px', marginRight: '4px' }}>
-                <path fillRule="evenodd" d="M7 2a1 1 0 011 1v1h3a1 1 0 110 2H9.25a12.87 12.87 0 01-1.39 3.125 12.92 12.92 0 003.58 2.085 1 1 0 11-.74 1.856 14.93 14.93 0 01-4.14-2.484 14.93 14.93 0 01-4.14 2.484 1 1 0 11-.74-1.856 12.92 12.92 0 003.58-2.085A12.87 12.87 0 013.9 6H2a1 1 0 010-2h3V3a1 1 0 011-1zm6 6a1 1 0 011 1v7a1 1 0 11-2 0v-7a1 1 0 011-1zm3 0a1 1 0 011 1v7a1 1 0 11-2 0v-7a1 1 0 011-1z" clipRule="evenodd" />
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="gov-icon-svg" aria-hidden="true">
+                <circle cx="12" cy="4" r="2" />
+                <path d="M15 8h-6v7m3-4v9" />
               </svg>
-              <span>{lang === 'en' ? 'हिन्दी (Hindi)' : 'English'}</span>
+              <span>{lang === 'hi' ? 'स्क्रीन रीडर' : 'Screen Reader'}</span>
             </button>
+
+            <span className="gov-top-sep" aria-hidden="true">|</span>
+
+            {/* Language Switcher English | हिंदी */}
+            <button
+              type="button"
+              className="gov-lang-switch-btn"
+              onClick={onToggleLang}
+              title={lang === 'en' ? 'Switch to हिंदी' : 'Switch to English'}
+            >
+              <span className={lang === 'en' ? 'lang-active' : 'lang-inactive'}>English</span>
+              <span className="lang-sep">|</span>
+              <span className={lang === 'hi' ? 'lang-active' : 'lang-inactive'}>हिंदी</span>
+            </button>
+
+            {/* Globe Icon */}
+            <span className="gov-globe-icon" aria-hidden="true" title="Language selection">
+              🌐
+            </span>
           </div>
         </div>
       </div>
 
-      {/* 3. Main Institutional Brand Masthead */}
-      <div className="gov-masthead">
-        <div className="gov-masthead-inner">
+      {/* 2. Main White Navigation Header */}
+      <div className="gov-main-nav-bar">
+        <div className="gov-main-nav-inner">
+          {/* Left Brand with Graduation Cap Logo */}
           <div
-            className="gov-brand-group"
+            className="gov-brand-clickable"
             onClick={onGoHome}
             role="button"
             tabIndex={0}
-            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onGoHome()}
-            title="Go to APAARSetu Portal Home"
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onGoHome && onGoHome()}
+            title="APAARSetu Home"
           >
-            {/* National Emblem & AICTE Symbol */}
-            <div className="gov-brand-icon" aria-hidden="true">
-              <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="gov-symbol-svg">
-                <rect x="2" y="32" width="36" height="4" rx="1.5" fill="#0b2545" />
-                <path d="M8 32V16C8 12.6863 10.6863 10 14 10H26C29.3137 10 32 12.6863 32 16V32" stroke="#0b2545" strokeWidth="2.5" />
-                <path d="M14 32V20C14 17.7909 15.7909 16 18 16H22C24.2091 16 26 17.7909 26 20V32" stroke="#133b68" strokeWidth="2" />
-                <circle cx="20" cy="6" r="2.5" fill="#d97706" />
-                <line x1="20" y1="16" x2="20" y2="32" stroke="#16a34a" strokeWidth="1.5" strokeDasharray="2 2" />
+            <div className="gov-cap-icon-box" aria-hidden="true">
+              <svg viewBox="0 0 48 40" fill="none" className="gov-mortarboard-svg">
+                {/* Mortarboard Cap */}
+                <polygon points="24,6 45,16 24,26 3,16" fill="#0b2545" stroke="#071930" strokeWidth="1.5" />
+                <polygon points="24,10 40,16 24,23 8,16" fill="#174A78" />
+                {/* Cap Base */}
+                <path d="M14,21 L14,30 C14,35 34,35 34,30 L34,21" fill="#0b2545" stroke="#071930" strokeWidth="1.5" />
+                {/* Tassel */}
+                <path d="M24,16 C24,20 37,22 38,27 L37,33" stroke="#f26a1b" strokeWidth="2" strokeLinecap="round" />
+                <circle cx="24" cy="16" r="2" fill="#f26a1b" />
+                <rect x="35" y="32" width="4" height="6" rx="1" fill="#f26a1b" />
               </svg>
             </div>
 
-            <div className="gov-title-group">
-              <div className="gov-title-hindi" lang="hi">अखिल भारतीय तकनीकी शिक्षा परिषद • विनियमन ब्यूरो</div>
-              <h1 className="gov-title-en">
-                {lang === 'hi' ? 'अपार सेतु (APAARSetu)' : 'APAARSetu'}
-              </h1>
-              <div className="gov-subtitle">
+            <div className="gov-brand-text">
+              <div className="gov-brand-title">APAARSetu</div>
+              <div className="gov-brand-subtitle">
                 {getTranslation('platformSubtitle', lang)}
               </div>
             </div>
           </div>
 
-          {/* Right Action / Context */}
-          <div className="gov-masthead-right">
+          {/* Center Navigation Links (Exact items from screenshot) */}
+          <nav className="gov-center-nav" aria-label="Main Navigation">
+            <button
+              type="button"
+              className={`gov-nav-link ${activeNav === 'home' ? 'nav-active' : ''}`}
+              onClick={() => handleNavItemClick('home')}
+            >
+              {getTranslation('navHome', lang)}
+            </button>
+            <button
+              type="button"
+              className={`gov-nav-link ${activeNav === 'about' ? 'nav-active' : ''}`}
+              onClick={() => handleNavItemClick('about')}
+            >
+              {getTranslation('navAbout', lang)}
+            </button>
+            <button
+              type="button"
+              className={`gov-nav-link ${activeNav === 'workflow' ? 'nav-active' : ''}`}
+              onClick={() => handleNavItemClick('workflow')}
+            >
+              {getTranslation('navWorkflow', lang)}
+            </button>
+            <button
+              type="button"
+              className={`gov-nav-link ${activeNav === 'stakeholders' ? 'nav-active' : ''}`}
+              onClick={() => handleNavItemClick('stakeholders')}
+            >
+              {getTranslation('navStakeholders', lang)}
+            </button>
+            <button
+              type="button"
+              className={`gov-nav-link ${activeNav === 'help' ? 'nav-active' : ''}`}
+              onClick={() => handleNavItemClick('help')}
+            >
+              {getTranslation('navHelpFaq', lang)}
+            </button>
+          </nav>
+
+          {/* Right Action Buttons */}
+          <div className="gov-right-actions">
             {!currentUser ? (
-              <div className="gov-header-cta-group">
+              <div className="gov-auth-btns-row">
+                {/* 1. Login button: White bg, navy border */}
                 <button
                   type="button"
-                  className="gov-btn-header-signin"
+                  className="gov-btn-login-outline"
                   onClick={onSignIn}
                 >
-                  <svg viewBox="0 0 20 20" fill="currentColor" className="gov-btn-icon" aria-hidden="true">
-                    <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                  </svg>
-                  <span>{getTranslation('navLogin', lang)}</span>
+                  <span className="gov-btn-ico" aria-hidden="true">👤</span>
+                  <span>{getTranslation('btnLogin', lang)}</span>
+                </button>
+
+                {/* 2. Register Institution button: Vibrant orange background */}
+                <button
+                  type="button"
+                  className="gov-btn-register-solid"
+                  onClick={onRegister || onSignIn}
+                >
+                  <span className="gov-btn-ico" aria-hidden="true">🏛️</span>
+                  <span>{getTranslation('btnRegisterInst', lang)}</span>
                 </button>
               </div>
             ) : (

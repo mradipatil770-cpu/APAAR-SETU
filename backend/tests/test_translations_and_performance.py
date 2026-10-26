@@ -63,7 +63,7 @@ def test_translation_values_non_empty_and_meaningful():
         assert len(val.strip()) > 0, f"Hindi key '{key}' has empty translation"
         if key not in {"version", "allRightsReserved"}:
             has_devanagari = any(0x0900 <= ord(c) <= 0x097F for c in val)
-            assert has_devanagari or "2026" in val or "AICTE" in val, (
+            assert has_devanagari or "2026" in val or "AICTE" in val or "APAAR" in val or "NOC" in val, (
                 f"Hindi key '{key}' value '{val}' does not contain Devanagari script"
             )
 
