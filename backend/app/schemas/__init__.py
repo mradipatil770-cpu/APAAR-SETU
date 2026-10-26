@@ -16,6 +16,15 @@ from app.schemas.schemas import (
     VerificationCreateRequest,
     VerificationDecisionRequest,
     VerificationResponse,
+    InstitutionRegistrationRequest,
+    InstitutionRegistrationResponse,
+    PendingInstitutionResponse,
+    InstitutionApprovalRequest,
+    StudentTransferRequest,
+    StudentTransferDecisionRequest,
+    StudentTransferResponse,
+    ForgotPasswordRequest,
+    ResetPasswordRequest,
 )
 
 __all__ = [
@@ -36,5 +45,14 @@ __all__ = [
     "VerificationCreateRequest",
     "VerificationDecisionRequest",
     "VerificationResponse",
+    "InstitutionRegistrationRequest",
+    "InstitutionRegistrationResponse",
+    "PendingInstitutionResponse",
+    "InstitutionApprovalRequest",
+    "StudentTransferRequest",
+    "StudentTransferDecisionRequest",
+    "StudentTransferResponse",
+    "ForgotPasswordRequest",
+    "ResetPasswordRequest",
 ]
 

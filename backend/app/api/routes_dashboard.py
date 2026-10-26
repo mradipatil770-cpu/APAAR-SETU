@@ -55,15 +55,28 @@ def get_institution_dashboard(
         Programme, ApprovedIntake.programme_id == Programme.id
     ).filter(ApprovedIntake.institution_id == auth.institution_id).all()
 
+    # Performance Optimization: Single batch query for enrolment counts (resolves N+1 query latency)
+    enrolment_counts_rows = db.query(
+        Enrolment.programme_id,
+        Enrolment.academic_year,
+        func.count(Enrolment.id),
+    ).filter(
+        Enrolment.institution_id == auth.institution_id
+    ).group_by(
+        Enrolment.programme_id,
+        Enrolment.academic_year,
+    ).all()
+
+    enrolment_map = {
+        (str(row[0]), str(row[1])): int(row[2])
+        for row in enrolment_counts_rows
+    }
+
     programme_stats: List[ProgrammeIntakeStat] = []
     intake_discrepancy_count = 0
 
     for intake_obj, prog_obj in intakes:
-        enrolled_count = db.query(func.count(Enrolment.id)).filter(
-            Enrolment.institution_id == auth.institution_id,
-            Enrolment.programme_id == prog_obj.id,
-            Enrolment.academic_year == intake_obj.academic_year,
-        ).scalar() or 0
+        enrolled_count = enrolment_map.get((str(prog_obj.id), str(intake_obj.academic_year)), 0)
 
         is_exceeded = enrolled_count > intake_obj.approved_intake
         if is_exceeded:
@@ -119,20 +132,33 @@ def get_admin_dashboard(
     ).scalar() or 0
 
     institutions = db.query(Institution).all()
-    summaries = []
-    for inst in institutions:
-        inst_uploads = db.query(func.count(DataUpload.id)).filter(DataUpload.institution_id == inst.id).scalar() or 0
-        inst_anomalies = db.query(func.count(AnomalyCase.id)).filter(
-            AnomalyCase.institution_id == inst.id,
-            AnomalyCase.status == "OPEN",
-        ).scalar() or 0
-        summaries.append({
+    inst_ids = [inst.id for inst in institutions]
+
+    # Batch queries to eliminate N+1 loops
+    upload_counts = dict(
+        db.query(DataUpload.institution_id, func.count(DataUpload.id))
+        .filter(DataUpload.institution_id.in_(inst_ids))
+        .group_by(DataUpload.institution_id)
+        .all()
+    ) if inst_ids else {}
+
+    anomaly_counts = dict(
+        db.query(AnomalyCase.institution_id, func.count(AnomalyCase.id))
+        .filter(AnomalyCase.institution_id.in_(inst_ids), AnomalyCase.status == "OPEN")
+        .group_by(AnomalyCase.institution_id)
+        .all()
+    ) if inst_ids else {}
+
+    summaries = [
+        {
             "institution_id": inst.id,
             "code": inst.code,
             "name": inst.name,
-            "uploads_count": inst_uploads,
-            "open_anomalies": inst_anomalies,
-        })
+            "uploads_count": upload_counts.get(inst.id, 0),
+            "open_anomalies": anomaly_counts.get(inst.id, 0),
+        }
+        for inst in institutions
+    ]
 
     return AdminDashboardStats(
         total_institutions=total_institutions,

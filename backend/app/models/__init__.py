@@ -11,6 +11,7 @@ from app.models.models import (
     AnomalyCase,
     AuditLog,
     VerificationRequest,
+    StudentTransfer,
 )
 
 __all__ = [
@@ -26,4 +27,5 @@ __all__ = [
     "AnomalyCase",
     "AuditLog",
     "VerificationRequest",
+    "StudentTransfer",
 ]

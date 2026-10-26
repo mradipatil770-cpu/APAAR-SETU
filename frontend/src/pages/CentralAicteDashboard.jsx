@@ -1,54 +1,116 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
+import { getTranslation } from '../i18n/translations';
 
-export default function CentralAicteDashboard({ user, onSignOut }) {
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'directory' | 'duplicates' | 'verifications'
+export default function CentralAicteDashboard({ user, onSignOut, lang = 'en' }) {
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'directory' | 'pending' | 'duplicates' | 'transfers' | 'verifications'
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
   const [institutions, setInstitutions] = useState([]);
+  const [pendingInstitutions, setPendingInstitutions] = useState([]);
   const [duplicates, setDuplicates] = useState([]);
+  const [transfers, setTransfers] = useState([]);
   const [verifications, setVerifications] = useState([]);
   const [intakeSummary, setIntakeSummary] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedInst, setSelectedInst] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
+  const [successMsg, setSuccessMsg] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
-  const fetchCentralData = async () => {
+  const isAdmin = user?.role === 'AICTE_ADMIN';
+
+  // Lazy-load data based on active tab to eliminate connection pool starvation
+  const fetchTabData = async (tabToFetch, force = false) => {
+    setErrorMsg(null);
+    setLoading(true);
+
     try {
-      setLoading(true);
-      setErrorMsg(null);
-
-      const [statsRes, instsRes, dupsRes, verifsRes, intakeRes] = await Promise.allSettled([
-        api.getCentralDashboard(),
-        api.getCentralInstitutions(),
-        api.getCentralDuplicates(),
-        api.getVerifications(),
-        api.getCentralIntakeSummary('2026-27'),
-      ]);
-
-      if (statsRes.status === 'fulfilled') setStats(statsRes.value);
-      if (instsRes.status === 'fulfilled') setInstitutions(instsRes.value || []);
-      if (dupsRes.status === 'fulfilled') setDuplicates(dupsRes.value || []);
-      if (verifsRes.status === 'fulfilled') setVerifications(verifsRes.value || []);
-      if (intakeRes.status === 'fulfilled') setIntakeSummary(intakeRes.value || []);
-
-      if (
-        statsRes.status === 'rejected' &&
-        instsRes.status === 'rejected' &&
-        dupsRes.status === 'rejected'
-      ) {
-        setErrorMsg('Unable to retrieve central metrics. Please verify network connectivity.');
+      if (tabToFetch === 'overview') {
+        const [statsRes, intakeRes] = await Promise.allSettled([
+          api.getCentralDashboard(),
+          api.getCentralIntakeSummary('2026-27'),
+        ]);
+        if (statsRes.status === 'fulfilled') setStats(statsRes.value);
+        if (intakeRes.status === 'fulfilled') setIntakeSummary(intakeRes.value || []);
+      } else if (tabToFetch === 'directory') {
+        if (institutions.length === 0 || force) {
+          const res = await api.getCentralInstitutions();
+          setInstitutions(res || []);
+        }
+      } else if (tabToFetch === 'pending') {
+        if (pendingInstitutions.length === 0 || force) {
+          const res = await api.getPendingInstitutions();
+          setPendingInstitutions(res || []);
+        }
+      } else if (tabToFetch === 'duplicates') {
+        if (duplicates.length === 0 || force) {
+          const res = await api.getCentralDuplicates();
+          setDuplicates(res || []);
+        }
+      } else if (tabToFetch === 'transfers') {
+        if (transfers.length === 0 || force) {
+          const res = await api.getCentralTransfers();
+          setTransfers(res || []);
+        }
+      } else if (tabToFetch === 'verifications') {
+        if (verifications.length === 0 || force) {
+          const res = await api.getVerifications();
+          setVerifications(res || []);
+        }
       }
     } catch (err) {
-      setErrorMsg('Failed to synchronize central regulatory data.');
+      setErrorMsg(err.message || 'Failed to retrieve data for the active view.');
     } finally {
       setLoading(false);
     }
   };
 
+  // Initial load: Fetch overview metrics
   useEffect(() => {
-    fetchCentralData();
+    fetchTabData('overview');
   }, []);
+
+  // On tab change: Load tab-specific data on-demand
+  useEffect(() => {
+    fetchTabData(activeTab);
+  }, [activeTab]);
+
+  const handleManualRefresh = () => {
+    fetchTabData(activeTab, true);
+  };
+
+  const handleDecideInstitution = async (institutionId, newStatus, remarks) => {
+    if (!isAdmin) {
+      setErrorMsg('Unauthorized: Only AICTE Central Director (AICTE_ADMIN) can approve or reject institutions.');
+      return;
+    }
+    try {
+      setActionLoading(true);
+      setErrorMsg(null);
+      await api.decideInstitutionOnboarding(institutionId, newStatus, remarks);
+      setSuccessMsg(`Institution status successfully updated to ${newStatus}.`);
+      handleManualRefresh();
+    } catch (err) {
+      setErrorMsg(err.message || 'Failed to update institution status.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDecideTransfer = async (transferId, newStatus, remarks) => {
+    try {
+      setActionLoading(true);
+      setErrorMsg(null);
+      await api.decideCentralTransfer(transferId, newStatus, remarks);
+      setSuccessMsg(`Transfer request updated to ${newStatus}.`);
+      handleManualRefresh();
+    } catch (err) {
+      setErrorMsg(err.message || 'Failed to update transfer status.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   const filteredInstitutions = institutions.filter(
     (inst) =>
@@ -83,7 +145,7 @@ export default function CentralAicteDashboard({ user, onSignOut }) {
           <button
             type="button"
             className="gov-btn gov-btn-outline"
-            onClick={fetchCentralData}
+            onClick={handleManualRefresh}
             title="Refresh data from central database"
           >
             <svg viewBox="0 0 20 20" fill="currentColor" className="gov-btn-svg" aria-hidden="true">
@@ -101,6 +163,12 @@ export default function CentralAicteDashboard({ user, onSignOut }) {
         </div>
       </div>
 
+      {successMsg && (
+        <div className="gov-alert-banner success" style={{ marginBottom: '16px' }}>
+          <span>{successMsg}</span>
+        </div>
+      )}
+
       {errorMsg && (
         <div className="gov-alert-banner error" role="alert">
           <svg viewBox="0 0 20 20" fill="currentColor" className="gov-alert-icon" aria-hidden="true">
@@ -113,9 +181,15 @@ export default function CentralAicteDashboard({ user, onSignOut }) {
       {/* 2. Executive Metric Tiles */}
       <div className="gov-stats-grid">
         <div className="gov-stat-tile" style={{ borderTop: '4px solid var(--gov-navy)' }}>
-          <div className="gov-stat-label">Registered Institutions</div>
+          <div className="gov-stat-label">Active Institutions</div>
           <div className="gov-stat-number">{stats?.total_institutions ?? institutions.length}</div>
-          <div className="gov-stat-subtext">Active in central directory</div>
+          <div className="gov-stat-subtext">Approved technical institutes</div>
+        </div>
+
+        <div className="gov-stat-tile" style={{ borderTop: '4px solid #ea580c' }}>
+          <div className="gov-stat-label">Pending Verifications</div>
+          <div className="gov-stat-number" style={{ color: '#ea580c' }}>{pendingInstitutions.length}</div>
+          <div className="gov-stat-subtext">Awaiting regulatory approval</div>
         </div>
 
         <div className="gov-stat-tile" style={{ borderTop: '4px solid var(--gov-blue-accent)' }}>
@@ -129,11 +203,11 @@ export default function CentralAicteDashboard({ user, onSignOut }) {
           <div className="gov-stat-number" style={{ color: 'var(--tricolor-green)' }}>
             {totalEnrolled.toLocaleString()}
           </div>
-          <div className="gov-stat-subtext">Processed & accepted admissions</div>
+          <div className="gov-stat-subtext">Accepted admission records</div>
         </div>
 
         <div className="gov-stat-tile" style={{ borderTop: '4px solid var(--tricolor-saffron)' }}>
-          <div className="gov-stat-label">Cross-Institution Candidates</div>
+          <div className="gov-stat-label">Duplicate Collisions</div>
           <div className="gov-stat-number" style={{ color: 'var(--tricolor-saffron)' }}>
             {stats?.total_cross_institution_duplicates ?? duplicates.length}
           </div>
@@ -141,11 +215,11 @@ export default function CentralAicteDashboard({ user, onSignOut }) {
         </div>
 
         <div className="gov-stat-tile" style={{ borderTop: '4px solid #6366f1' }}>
-          <div className="gov-stat-label">Active Verification Inquiries</div>
+          <div className="gov-stat-label">Student Transfers</div>
           <div className="gov-stat-number" style={{ color: '#6366f1' }}>
-            {verifications.length}
+            {transfers.length}
           </div>
-          <div className="gov-stat-subtext">External stakeholder requests</div>
+          <div className="gov-stat-subtext">Inter-institution mobility</div>
         </div>
       </div>
 
@@ -172,11 +246,29 @@ export default function CentralAicteDashboard({ user, onSignOut }) {
         <button
           type="button"
           role="tab"
+          aria-selected={activeTab === 'pending'}
+          className={`gov-tab-btn ${activeTab === 'pending' ? 'active' : ''}`}
+          onClick={() => setActiveTab('pending')}
+        >
+          Pending Onboarding Approvals ({pendingInstitutions.length})
+        </button>
+        <button
+          type="button"
+          role="tab"
           aria-selected={activeTab === 'duplicates'}
           className={`gov-tab-btn ${activeTab === 'duplicates' ? 'active' : ''}`}
           onClick={() => setActiveTab('duplicates')}
         >
-          Cross-Institution Candidates ({duplicates.length})
+          Collision Candidates ({duplicates.length})
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'transfers'}
+          className={`gov-tab-btn ${activeTab === 'transfers' ? 'active' : ''}`}
+          onClick={() => setActiveTab('transfers')}
+        >
+          Transfers & Dual Degrees ({transfers.length})
         </button>
         <button
           type="button"
@@ -198,75 +290,63 @@ export default function CentralAicteDashboard({ user, onSignOut }) {
           </p>
         </div>
       ) : (
-        <div className="gov-tab-panel">
-          {/* TAB 1: Overview */}
+        <div className="gov-tab-content">
+          {/* TAB 1: National Overview */}
           {activeTab === 'overview' && (
             <div className="gov-panel-column">
-              {/* Capacity Allocation Meter */}
               <div className="gov-card">
                 <div className="gov-card-header">
                   <div>
-                    <h3 className="gov-card-title">National Intake Capacity Allocation</h3>
+                    <h3 className="gov-card-title">National Sanctioned Quota Utilization Matrix</h3>
                     <p className="gov-card-subtitle">
-                      Cumulative student admissions confirmed against aggregate approved capacity.
+                      Cumulative approved intake versus validated enrolments across technical disciplines (AY 2026–27).
                     </p>
                   </div>
-                  <span className="gov-chip gov-chip-neutral">{utilizationPct}% Allocated</span>
-                </div>
-                <div className="gov-card-body">
-                  <div className="gov-progress-bar-container large">
-                    <div
-                      className="gov-progress-bar-fill"
-                      style={{ width: `${Math.min(utilizationPct, 100)}%` }}
-                      role="progressbar"
-                      aria-valuenow={utilizationPct}
-                      aria-valuemin="0"
-                      aria-valuemax="100"
-                    />
-                  </div>
-                  <div className="gov-progress-meta-row">
-                    <span>Enrolled Headcount: <strong>{totalEnrolled.toLocaleString()}</strong></span>
-                    <span>Approved Capacity: <strong>{totalSanctioned.toLocaleString()}</strong></span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Programme Breakdown Table */}
-              <div className="gov-card">
-                <div className="gov-card-header">
-                  <div>
-                    <h3 className="gov-card-title">Discipline Quota Distribution</h3>
-                    <p className="gov-card-subtitle">
-                      Breakdown of sanctioned capacity across academic programmes.
-                    </p>
+                  <div className="gov-header-pill">
+                    Overall National Utilization: <strong>{utilizationPct}%</strong>
                   </div>
                 </div>
                 <div className="gov-card-body">
                   {intakeSummary.length === 0 ? (
-                    <p style={{ color: 'var(--text-muted)', padding: '16px 0' }}>
-                      No discipline quota summaries currently returned by the database.
-                    </p>
+                    <div className="gov-empty-state">
+                      <p>No intake capacity records mapped for this academic year.</p>
+                    </div>
                   ) : (
                     <div className="table-responsive">
                       <table className="gov-table">
                         <thead>
                           <tr>
-                            <th>Discipline Code</th>
-                            <th>Programme Name</th>
-                            <th>Sanctioned Capacity</th>
-                            <th>Admitted Headcount</th>
-                            <th>Status</th>
+                            <th>Discipline / Branch Code</th>
+                            <th>Programme Description</th>
+                            <th>Academic Cycle</th>
+                            <th>Sanctioned Quota</th>
+                            <th>Validated Admissions</th>
+                            <th>Capacity Utilization</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {intakeSummary.map((prog, i) => (
-                            <tr key={i}>
-                              <td><code>{prog.programme_code || prog.code}</code></td>
-                              <td>{prog.programme_name || prog.name}</td>
-                              <td>{prog.approved_intake ?? '—'}</td>
-                              <td>{prog.actual_enrolment ?? '—'}</td>
+                          {intakeSummary.map((item, idx) => (
+                            <tr key={idx}>
+                              <td><strong className="mono">{item.programme_code}</strong></td>
+                              <td>{item.programme_name}</td>
+                              <td>{item.academic_year}</td>
+                              <td>{item.total_approved_intake?.toLocaleString()}</td>
+                              <td><strong>{item.total_enrolled?.toLocaleString()}</strong></td>
                               <td>
-                                <span className="gov-chip gov-chip-success">Recorded</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <div className="gov-progress-bar-bg" style={{ flex: 1 }}>
+                                    <div
+                                      className="gov-progress-bar-fill"
+                                      style={{
+                                        width: `${Math.min(100, item.utilization_pct || 0)}%`,
+                                        background: item.utilization_pct > 100 ? 'var(--error)' : 'var(--gov-blue-accent)',
+                                      }}
+                                    />
+                                  </div>
+                                  <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>
+                                    {item.utilization_pct}%
+                                  </span>
+                                </div>
                               </td>
                             </tr>
                           ))}
@@ -276,172 +356,166 @@ export default function CentralAicteDashboard({ user, onSignOut }) {
                   )}
                 </div>
               </div>
-
-              {/* Cryptographic Controls Disclosure */}
-              <div className="gov-card">
-                <div className="gov-card-header">
-                  <h3 className="gov-card-title">Data Protection & Cryptographic Architecture</h3>
-                </div>
-                <div className="gov-card-body">
-                  <div className="gov-security-grid">
-                    <div className="gov-sec-block">
-                      <h4>Deterministic Blind Indexing</h4>
-                      <p>
-                        Candidate detection uses HMAC-SHA-256 tokens derived from unique salts, enabling
-                        cross-institution collision detection without storing or comparing plaintext identifiers.
-                      </p>
-                    </div>
-                    <div className="gov-sec-block">
-                      <h4>AES-256-GCM Column Vaulting</h4>
-                      <p>
-                        Stored student master records are encrypted with unique random nonces and authenticated
-                        data bounds, mitigating data exposure risks.
-                      </p>
-                    </div>
-                    <div className="gov-sec-block">
-                      <h4>Multi-Tenant Row-Level Security</h4>
-                      <p>
-                        Relational constraints enforce strict tenant boundaries so institutional staff cannot
-                        query other institutions' student-level records.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
           )}
 
           {/* TAB 2: Institutions Directory */}
           {activeTab === 'directory' && (
             <div className="gov-panel-column">
-              <div className="gov-filter-bar">
-                <input
-                  type="text"
-                  className="gov-search-input"
-                  placeholder="Filter institutions by name or code (e.g. AICTE-ENG-001)..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  aria-label="Filter institutions"
-                />
-                <span className="gov-filter-count">
-                  {filteredInstitutions.length} {filteredInstitutions.length === 1 ? 'institution' : 'institutions'} listed
-                </span>
-              </div>
-
-              <div className="gov-card table-card">
-                {filteredInstitutions.length === 0 ? (
-                  <div className="gov-empty-state">
-                    <p>No institutions match the filter criteria.</p>
+              <div className="gov-card">
+                <div className="gov-card-header">
+                  <div>
+                    <h3 className="gov-card-title">AICTE Approved Technical Institutions</h3>
+                    <p className="gov-card-subtitle">
+                      Directory of technical institutions onboarded for academic student verification.
+                    </p>
                   </div>
-                ) : (
+                  <input
+                    type="search"
+                    className="gov-form-input sm"
+                    placeholder="Search institution by name or code..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    style={{ maxWidth: '320px' }}
+                  />
+                </div>
+                <div className="gov-card-body">
                   <div className="table-responsive">
                     <table className="gov-table">
                       <thead>
                         <tr>
-                          <th>Institution Code</th>
-                          <th>Institution Name</th>
-                          <th>Approved Intake</th>
-                          <th>Total Enrolled</th>
+                          <th>Permanent ID</th>
+                          <th>Institution Legal Name</th>
+                          <th>Programmes</th>
+                          <th>Sanctioned Intake</th>
+                          <th>Enrolled Students</th>
                           <th>Utilization</th>
-                          <th>Open Exceptions</th>
-                          <th>Audit Actions</th>
+                          <th>Status</th>
                         </tr>
                       </thead>
                       <tbody>
                         {filteredInstitutions.map((inst) => (
                           <tr key={inst.id}>
-                            <td><code>{inst.code}</code></td>
-                            <td><strong>{inst.name}</strong></td>
-                            <td>{inst.approved_intake ?? '—'}</td>
-                            <td>{inst.enrolled_count ?? 0}</td>
+                            <td><strong className="mono">{inst.code}</strong></td>
+                            <td>{inst.name}</td>
+                            <td>{inst.programme_count}</td>
+                            <td>{inst.approved_intake}</td>
+                            <td><strong>{inst.enrolled_count}</strong></td>
+                            <td>{inst.utilization_pct}%</td>
                             <td>
-                              <span className="gov-chip gov-chip-neutral">
-                                {inst.utilization_pct != null ? `${Math.round(inst.utilization_pct)}%` : '—'}
+                              <span className="gov-chip gov-chip-success">
+                                Active
                               </span>
-                            </td>
-                            <td>
-                              {inst.open_anomalies > 0 ? (
-                                <span className="gov-chip gov-chip-error">{inst.open_anomalies} Open</span>
-                              ) : (
-                                <span className="gov-chip gov-chip-success">Clean</span>
-                              )}
-                            </td>
-                            <td>
-                              <button
-                                type="button"
-                                className="gov-btn-inline-action"
-                                onClick={() => setSelectedInst(inst)}
-                              >
-                                View Dossier
-                              </button>
                             </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
-                )}
-              </div>
-
-              {/* Institution Dossier Modal */}
-              {selectedInst && (
-                <div className="gov-modal-backdrop" onClick={() => setSelectedInst(null)}>
-                  <div
-                    className="gov-modal"
-                    onClick={(e) => e.stopPropagation()}
-                    role="dialog"
-                    aria-modal="true"
-                    aria-labelledby="dossier-heading"
-                  >
-                    <div className="gov-modal-header">
-                      <h3 id="dossier-heading">Institution Dossier: {selectedInst.code}</h3>
-                      <button
-                        type="button"
-                        className="gov-modal-close"
-                        onClick={() => setSelectedInst(null)}
-                        aria-label="Close modal"
-                      >
-                        ×
-                      </button>
-                    </div>
-                    <div className="gov-modal-body">
-                      <div className="gov-dossier-field">
-                        <span className="gov-dossier-label">Official Name:</span>
-                        <span className="gov-dossier-value">{selectedInst.name}</span>
-                      </div>
-                      <div className="gov-dossier-field">
-                        <span className="gov-dossier-label">System UUID:</span>
-                        <code className="gov-dossier-value">{selectedInst.id}</code>
-                      </div>
-                      <div className="gov-dossier-field">
-                        <span className="gov-dossier-label">Sanctioned Intake Quota:</span>
-                        <span className="gov-dossier-value">{selectedInst.approved_intake ?? '—'} seats</span>
-                      </div>
-                      <div className="gov-dossier-field">
-                        <span className="gov-dossier-label">Active Enrolled Count:</span>
-                        <span className="gov-dossier-value">{selectedInst.enrolled_count ?? 0} students</span>
-                      </div>
-                      <div className="gov-dossier-field">
-                        <span className="gov-dossier-label">Open Anomaly Cases:</span>
-                        <span className="gov-dossier-value">{selectedInst.open_anomalies ?? 0} cases</span>
-                      </div>
-                    </div>
-                    <div className="gov-modal-footer">
-                      <button
-                        type="button"
-                        className="gov-btn gov-btn-primary"
-                        onClick={() => setSelectedInst(null)}
-                      >
-                        Close Dossier
-                      </button>
-                    </div>
-                  </div>
                 </div>
-              )}
+              </div>
             </div>
           )}
 
-          {/* TAB 3: Cross-Institution Duplicate Candidates */}
+          {/* TAB 3: Pending Onboarding Approvals (New AICTE Regulatory Gate) */}
+          {activeTab === 'pending' && (
+            <div className="gov-panel-column">
+              <div className="gov-card">
+                <div className="gov-card-header">
+                  <div>
+                    <h3 className="gov-card-title">Pending Institutional Registration Applications</h3>
+                    <p className="gov-card-subtitle">
+                      Newly registered technical institutions awaiting formal credentials verification under AICTE Approval Hand Book regulations.
+                    </p>
+                  </div>
+                  {!isAdmin && (
+                    <span className="gov-chip gov-chip-neutral">
+                      Read-Only View (Requires AICTE_ADMIN role to decide)
+                    </span>
+                  )}
+                </div>
+                <div className="gov-card-body">
+                  {pendingInstitutions.length === 0 ? (
+                    <div className="gov-empty-state">
+                      <div className="gov-empty-icon-check" aria-hidden="true">✓</div>
+                      <h4>No Pending Institution Applications</h4>
+                      <p>All institutional registration applications have been reviewed and adjudicated.</p>
+                    </div>
+                  ) : (
+                    <div className="table-responsive">
+                      <table className="gov-table">
+                        <thead>
+                          <tr>
+                            <th>Institute Code</th>
+                            <th>Institution Legal Name</th>
+                            <th>Category</th>
+                            <th>Head / Principal</th>
+                            <th>Contact Phone</th>
+                            <th>State & Location</th>
+                            <th>Status</th>
+                            <th>Regulatory Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {pendingInstitutions.map((p) => (
+                            <tr key={p.id}>
+                              <td><strong className="mono">{p.code}</strong></td>
+                              <td>
+                                <div><strong>{p.name}</strong></div>
+                                <small style={{ color: 'var(--text-muted)' }}>{p.address}</small>
+                              </td>
+                              <td><small>{p.institution_type || 'AFFILIATED'}</small></td>
+                              <td>
+                                <div>{p.contact_name || '—'}</div>
+                                <small style={{ color: 'var(--text-muted)' }}>{p.contact_designation}</small>
+                              </td>
+                              <td className="mono"><small>{p.contact_phone || '—'}</small></td>
+                              <td>{p.state || '—'}</td>
+                              <td>
+                                <span className="gov-chip gov-chip-warning">
+                                  PENDING VERIFICATION
+                                </span>
+                              </td>
+                              <td>
+                                {isAdmin ? (
+                                  <div style={{ display: 'flex', gap: '6px' }}>
+                                    <button
+                                      type="button"
+                                      className="gov-btn gov-btn-primary"
+                                      style={{ padding: '4px 10px', fontSize: '0.75rem' }}
+                                      onClick={() => handleDecideInstitution(p.id, 'ACTIVE', 'Approved by Central AICTE Director.')}
+                                      disabled={actionLoading}
+                                    >
+                                      Approve
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="gov-btn gov-btn-outline"
+                                      style={{ padding: '4px 10px', fontSize: '0.75rem', borderColor: 'var(--error)', color: 'var(--error)' }}
+                                      onClick={() => handleDecideInstitution(p.id, 'REJECTED', 'Credentials did not match AICTE registry.')}
+                                      disabled={actionLoading}
+                                    >
+                                      Reject
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                    Director Approval Only
+                                  </span>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 4: Duplicate Collisions */}
           {activeTab === 'duplicates' && (
             <div className="gov-panel-column">
               <div className="gov-card">
@@ -501,7 +575,96 @@ export default function CentralAicteDashboard({ user, onSignOut }) {
             </div>
           )}
 
-          {/* TAB 4: Verification Oversight */}
+          {/* TAB 5: Transfers & Dual Degrees */}
+          {activeTab === 'transfers' && (
+            <div className="gov-panel-column">
+              <div className="gov-card">
+                <div className="gov-card-header">
+                  <div>
+                    <h3 className="gov-card-title">National Student Transfer & Dual Enrolment Ledger</h3>
+                    <p className="gov-card-subtitle">
+                      Inter-institutional mobility and dual-degree policy review cases requiring central regulatory adjudication.
+                    </p>
+                  </div>
+                </div>
+                <div className="gov-card-body">
+                  {transfers.length === 0 ? (
+                    <div className="gov-empty-state">
+                      <p>No active cross-institution student transfer requests recorded.</p>
+                    </div>
+                  ) : (
+                    <div className="table-responsive">
+                      <table className="gov-table">
+                        <thead>
+                          <tr>
+                            <th>Student Ref</th>
+                            <th>Masked APAAR</th>
+                            <th>Origin Institution</th>
+                            <th>Destination Institution</th>
+                            <th>Transfer Justification</th>
+                            <th>Status</th>
+                            <th>Central Adjudication</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {transfers.map((t) => (
+                            <tr key={t.id}>
+                              <td><strong className="mono">{t.student_ref}</strong></td>
+                              <td className="mono">{t.apaar_id_masked || '—'}</td>
+                              <td>{t.from_institution_name || t.from_institution_id?.slice(0, 8)}</td>
+                              <td>{t.to_institution_name || t.to_institution_id?.slice(0, 8)}</td>
+                              <td style={{ maxWidth: '240px', fontSize: '0.85rem' }}>{t.transfer_reason}</td>
+                              <td>
+                                <span
+                                  className={`gov-chip ${
+                                    t.status === 'APPROVED'
+                                      ? 'gov-chip-success'
+                                      : t.status === 'REJECTED'
+                                      ? 'gov-chip-error'
+                                      : 'gov-chip-warning'
+                                  }`}
+                                >
+                                  {t.status}
+                                </span>
+                              </td>
+                              <td>
+                                {t.status === 'PENDING_TRANSFER' ? (
+                                  <div style={{ display: 'flex', gap: '4px' }}>
+                                    <button
+                                      type="button"
+                                      className="gov-btn gov-btn-primary"
+                                      style={{ padding: '3px 8px', fontSize: '0.75rem' }}
+                                      onClick={() => handleDecideTransfer(t.id, 'APPROVED', 'Approved by AICTE Central Authority.')}
+                                      disabled={actionLoading}
+                                    >
+                                      Approve
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="gov-btn gov-btn-outline"
+                                      style={{ padding: '3px 8px', fontSize: '0.75rem' }}
+                                      onClick={() => handleDecideTransfer(t.id, 'REQUIRES_POLICY_REVIEW', 'Flagged for dual-degree regulatory review.')}
+                                      disabled={actionLoading}
+                                    >
+                                      Policy Review
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <small style={{ color: 'var(--text-muted)' }}>{t.remarks || 'Adjudicated'}</small>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 6: Verification Oversight */}
           {activeTab === 'verifications' && (
             <div className="gov-panel-column">
               <div className="gov-card">

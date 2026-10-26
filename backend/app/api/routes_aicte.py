@@ -14,6 +14,8 @@ from app.models.models import (
     Student,
     Enrolment,
     AnomalyCase,
+    AuditLog,
+    StudentTransfer,
 )
 from app.schemas.schemas import (
     CentralDashboardStats,
@@ -21,6 +23,10 @@ from app.schemas.schemas import (
     CrossInstitutionCandidateResponse,
     UploadResponse,
     ProgrammeIntakeStat,
+    PendingInstitutionResponse,
+    InstitutionApprovalRequest,
+    StudentTransferResponse,
+    StudentTransferDecisionRequest,
 )
 
 router = APIRouter(prefix="/api/v1/aicte", tags=["Central AICTE Oversight"])
@@ -84,7 +90,7 @@ def get_central_dashboard(
 
     latest_uploads = db.query(DataUpload).order_by(DataUpload.created_at.desc()).limit(10).all()
 
-    # Programme-wise national aggregation
+    # Programme-wise national aggregation (Batch query instead of N+1)
     progs_agg = db.query(
         Programme.code,
         Programme.name,
@@ -93,12 +99,17 @@ def get_central_dashboard(
         ApprovedIntake, Programme.id == ApprovedIntake.programme_id
     ).group_by(Programme.code, Programme.name).all()
 
+    # Single batch query for national enrolments by programme code
+    enrolled_by_code = dict(
+        db.query(Programme.code, func.count(Enrolment.id))
+        .join(Programme, Enrolment.programme_id == Programme.id)
+        .group_by(Programme.code)
+        .all()
+    )
+
     programme_breakdown = []
     for code, name, approved in progs_agg:
-        enrolled = db.query(func.count(Enrolment.id)).join(
-            Programme, Enrolment.programme_id == Programme.id
-        ).filter(Programme.code == code).scalar() or 0
-
+        enrolled = enrolled_by_code.get(code, 0)
         programme_breakdown.append({
             "programme_code": code,
             "programme_name": name,
@@ -132,6 +143,7 @@ def list_institutions_directory(
 ):
     """
     Searchable and filterable institution directory for central regulatory monitoring.
+    Uses batch grouped aggregations to eliminate N+1 database round trips.
     """
     enforce_central_regulatory_access(auth)
 
@@ -143,40 +155,72 @@ def list_institutions_directory(
         )
 
     institutions = query.order_by(Institution.name.asc()).offset(offset).limit(limit).all()
+    if not institutions:
+        return []
+
+    inst_ids = [inst.id for inst in institutions]
+
+    # Batch 1: Programme counts per institution
+    prog_counts = dict(
+        db.query(Programme.institution_id, func.count(Programme.id))
+        .filter(Programme.institution_id.in_(inst_ids))
+        .group_by(Programme.institution_id)
+        .all()
+    )
+
+    # Batch 2: Approved intake sums per institution
+    intake_sums = dict(
+        db.query(ApprovedIntake.institution_id, func.coalesce(func.sum(ApprovedIntake.approved_intake), 0))
+        .filter(ApprovedIntake.institution_id.in_(inst_ids))
+        .group_by(ApprovedIntake.institution_id)
+        .all()
+    )
+
+    # Batch 3: Enrolment counts per institution
+    enrolment_counts = dict(
+        db.query(Enrolment.institution_id, func.count(Enrolment.id))
+        .filter(Enrolment.institution_id.in_(inst_ids))
+        .group_by(Enrolment.institution_id)
+        .all()
+    )
+
+    # Batch 4: Open anomalies per institution
+    anomaly_counts = dict(
+        db.query(AnomalyCase.institution_id, func.count(AnomalyCase.id))
+        .filter(AnomalyCase.institution_id.in_(inst_ids), AnomalyCase.status == "OPEN")
+        .group_by(AnomalyCase.institution_id)
+        .all()
+    )
+
+    # Batch 5: Latest upload timestamp per institution
+    latest_uploads = dict(
+        db.query(DataUpload.institution_id, func.max(DataUpload.created_at))
+        .filter(DataUpload.institution_id.in_(inst_ids))
+        .group_by(DataUpload.institution_id)
+        .all()
+    )
 
     items = []
     for inst in institutions:
-        prog_count = db.query(func.count(Programme.id)).filter(Programme.institution_id == inst.id).scalar() or 0
-        approved_intake = db.query(
-            func.coalesce(func.sum(ApprovedIntake.approved_intake), 0)
-        ).filter(ApprovedIntake.institution_id == inst.id).scalar() or 0
+        p_count = prog_counts.get(inst.id, 0)
+        appr_intake = int(intake_sums.get(inst.id, 0))
+        enr_count = int(enrolment_counts.get(inst.id, 0))
+        op_anom = anomaly_counts.get(inst.id, 0)
+        last_up = latest_uploads.get(inst.id, None)
 
-        enrolled_count = db.query(func.count(Enrolment.id)).filter(
-            Enrolment.institution_id == inst.id
-        ).scalar() or 0
-
-        open_anomalies = db.query(func.count(AnomalyCase.id)).filter(
-            AnomalyCase.institution_id == inst.id,
-            AnomalyCase.status == "OPEN",
-        ).scalar() or 0
-
-        latest_upload = db.query(DataUpload.created_at).filter(
-            DataUpload.institution_id == inst.id
-        ).order_by(DataUpload.created_at.desc()).first()
-
-        util_pct = round((enrolled_count / approved_intake * 100), 1) if approved_intake > 0 else 0.0
+        util_pct = round((enr_count / appr_intake * 100), 1) if appr_intake > 0 else 0.0
 
         items.append(
             InstitutionDirectoryItem(
                 id=str(inst.id),
                 code=inst.code,
                 name=inst.name,
-                programme_count=prog_count,
-                approved_intake=int(approved_intake),
-                enrolled_count=int(enrolled_count),
+                programme_count=p_count,
+                approved_intake=appr_intake,
+                enrolled_count=enr_count,
                 utilization_pct=util_pct,
-                open_anomalies=open_anomalies,
-                latest_upload_at=latest_upload[0] if latest_upload else None,
+                open_anomalies=op_anom,
+                latest_upload_at=last_up,
             )
         )
 
@@ -206,13 +250,23 @@ def get_central_institution_detail(
         Programme, ApprovedIntake.programme_id == Programme.id
     ).filter(ApprovedIntake.institution_id == inst.id).all()
 
+    enrolment_map = {
+        (str(row[0]), str(row[1])): int(row[2])
+        for row in db.query(
+            Enrolment.programme_id,
+            Enrolment.academic_year,
+            func.count(Enrolment.id),
+        ).filter(
+            Enrolment.institution_id == inst.id
+        ).group_by(
+            Enrolment.programme_id,
+            Enrolment.academic_year,
+        ).all()
+    }
+
     programme_stats = []
     for intake_obj, prog_obj in intakes:
-        enrolled_count = db.query(func.count(Enrolment.id)).filter(
-            Enrolment.institution_id == inst.id,
-            Enrolment.programme_id == prog_obj.id,
-            Enrolment.academic_year == intake_obj.academic_year,
-        ).scalar() or 0
+        enrolled_count = enrolment_map.get((str(prog_obj.id), str(intake_obj.academic_year)), 0)
 
         programme_stats.append({
             "programme_code": prog_obj.code,
@@ -318,14 +372,24 @@ def get_national_intake_summary(
         Programme.code, Programme.name, ApprovedIntake.academic_year
     ).order_by(Programme.code.asc()).all()
 
+    # Batch query for enrolments by (programme_code, academic_year)
+    enrolled_by_code_year = {
+        (row[0], row[1]): int(row[2])
+        for row in db.query(
+            Programme.code,
+            Enrolment.academic_year,
+            func.count(Enrolment.id),
+        ).join(
+            Programme, Enrolment.programme_id == Programme.id
+        ).group_by(
+            Programme.code,
+            Enrolment.academic_year,
+        ).all()
+    }
+
     summary = []
     for code, name, year, approved in results:
-        enrolled = db.query(func.count(Enrolment.id)).join(
-            Programme, Enrolment.programme_id == Programme.id
-        ).filter(
-            Programme.code == code,
-            Enrolment.academic_year == year,
-        ).scalar() or 0
+        enrolled = enrolled_by_code_year.get((code, year), 0)
 
         summary.append({
             "programme_code": code,
@@ -337,4 +401,162 @@ def get_national_intake_summary(
         })
 
     return summary
+
+
+# -----------------------------------------------------------------
+# Institutional Onboarding Approvals (Central Regulatory Gate)
+# -----------------------------------------------------------------
+@router.get("/pending-institutions", response_model=List[PendingInstitutionResponse])
+def list_pending_institutions(
+    db: Session = Depends(get_db),
+    auth: AuthenticatedContext = Depends(get_current_user_context),
+):
+    """
+    Lists all institutions with status 'PENDING_VERIFICATION' awaiting AICTE regulatory approval.
+    """
+    enforce_central_regulatory_access(auth)
+    pending = db.query(Institution).filter(Institution.status == "PENDING_VERIFICATION").order_by(Institution.created_at.desc()).all()
+    return pending
+
+
+@router.post("/institutions/{institution_id}/decide", response_model=PendingInstitutionResponse)
+def decide_institution_onboarding(
+    institution_id: str,
+    payload: InstitutionApprovalRequest,
+    db: Session = Depends(get_db),
+    auth: AuthenticatedContext = Depends(get_current_user_context),
+):
+    """
+    Approves or rejects a newly registered institution.
+    Only AICTE_ADMIN can approve new institutions.
+    """
+    enforce_central_regulatory_access(auth)
+    if auth.role != "AICTE_ADMIN":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: Only AICTE_ADMIN role has authority to approve or reject institution registrations.",
+        )
+
+    inst = db.query(Institution).filter(Institution.id == institution_id).first()
+    if not inst:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Institution with ID '{institution_id}' was not found.",
+        )
+
+    prev_status = inst.status
+    inst.status = payload.status
+
+    # Record immutable audit log
+    audit = AuditLog(
+        institution_id=inst.id,
+        user_id=auth.user_id,
+        actor_role=auth.role,
+        action="INSTITUTION_VERIFICATION_DECIDED",
+        target_id=str(inst.id),
+        details=f"Status changed from {prev_status} to {payload.status} by AICTE Admin {auth.email}. Remarks: {payload.review_remarks or 'None'}",
+        status="SUCCESS",
+    )
+    db.add(audit)
+    db.commit()
+    db.refresh(inst)
+
+    return inst
+
+
+# -----------------------------------------------------------------
+# Student Transfers & Dual Enrolments Central Oversight
+# -----------------------------------------------------------------
+@router.get("/transfers", response_model=List[StudentTransferResponse])
+def list_all_transfers(
+    db: Session = Depends(get_db),
+    auth: AuthenticatedContext = Depends(get_current_user_context),
+):
+    """
+    Central review of all cross-institution student transfer requests.
+    """
+    enforce_central_regulatory_access(auth)
+    transfers = db.query(StudentTransfer).order_by(StudentTransfer.created_at.desc()).all()
+    
+    resp = []
+    for t in transfers:
+        from_name = t.from_institution.name if t.from_institution else None
+        to_name = t.to_institution.name if t.to_institution else None
+        resp.append(StudentTransferResponse(
+            id=str(t.id),
+            student_id=str(t.student_id),
+            student_ref=t.student_ref,
+            from_institution_id=str(t.from_institution_id),
+            from_institution_name=from_name,
+            to_institution_id=str(t.to_institution_id),
+            to_institution_name=to_name,
+            apaar_id_masked=t.apaar_id_masked,
+            transfer_reason=t.transfer_reason,
+            status=t.status,
+            remarks=t.remarks,
+            created_at=t.created_at,
+            updated_at=t.updated_at,
+        ))
+    return resp
+
+
+@router.post("/transfers/{transfer_id}/decide", response_model=StudentTransferResponse)
+def decide_transfer(
+    transfer_id: str,
+    payload: StudentTransferDecisionRequest,
+    db: Session = Depends(get_db),
+    auth: AuthenticatedContext = Depends(get_current_user_context),
+):
+    """
+    Central AICTE adjudication of disputed or pending student transfers.
+    """
+    enforce_central_regulatory_access(auth)
+    transfer = db.query(StudentTransfer).filter(StudentTransfer.id == transfer_id).first()
+    if not transfer:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Transfer request '{transfer_id}' not found.",
+        )
+
+    transfer.status = payload.status
+    transfer.remarks = payload.remarks
+    transfer.decided_by = auth.user_id
+    import datetime
+    transfer.decided_at = datetime.datetime.now(datetime.timezone.utc)
+
+    # If APPROVED, update student's institution_id
+    if payload.status == "APPROVED":
+        student = db.query(Student).filter(Student.id == transfer.student_id).first()
+        if student:
+            student.institution_id = transfer.to_institution_id
+
+    audit = AuditLog(
+        institution_id=transfer.to_institution_id,
+        user_id=auth.user_id,
+        actor_role=auth.role,
+        action="STUDENT_TRANSFER_DECIDED",
+        target_id=str(transfer.id),
+        details=f"Transfer for student {transfer.student_ref} marked {payload.status}. Remarks: {payload.remarks}",
+        status="SUCCESS",
+    )
+    db.add(audit)
+    db.commit()
+    db.refresh(transfer)
+
+    return StudentTransferResponse(
+        id=str(transfer.id),
+        student_id=str(transfer.student_id),
+        student_ref=transfer.student_ref,
+        from_institution_id=str(transfer.from_institution_id),
+        from_institution_name=transfer.from_institution.name if transfer.from_institution else None,
+        to_institution_id=str(transfer.to_institution_id),
+        to_institution_name=transfer.to_institution.name if transfer.to_institution else None,
+        apaar_id_masked=transfer.apaar_id_masked,
+        transfer_reason=transfer.transfer_reason,
+        status=transfer.status,
+        remarks=transfer.remarks,
+        created_at=transfer.created_at,
+        updated_at=transfer.updated_at,
+    )
+
 

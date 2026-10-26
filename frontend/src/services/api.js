@@ -49,7 +49,7 @@ export const api = {
   getHealth: () => request('/api/v1/health'),
   getReadiness: () => request('/api/v1/ready'),
 
-  // --- Authentication ---
+  // --- Authentication & Onboarding ---
   login: (email, password) =>
     request('/api/v1/auth/login', {
       method: 'POST',
@@ -58,6 +58,27 @@ export const api = {
     }),
 
   getMe: () => request('/api/v1/auth/me'),
+
+  registerInstitution: (payload) =>
+    request('/api/v1/auth/register-institution', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }),
+
+  forgotPassword: (email) =>
+    request('/api/v1/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    }),
+
+  resetPassword: (token, newPassword) =>
+    request('/api/v1/auth/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, new_password: newPassword }),
+    }),
 
   logout: () => {
     try {
@@ -122,6 +143,16 @@ export const api = {
 
   getReportDownloadUrl: () => `${API_BASE_URL}/api/v1/reports`,
 
+  // --- Inter-Institutional Student Transfers ---
+  getInstitutionTransfers: () => request('/api/v1/transfers'),
+
+  initiateTransfer: (payload) =>
+    request('/api/v1/transfers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }),
+
   // --- Central AICTE Oversight APIs ---
   getCentralDashboard: () => request('/api/v1/aicte/dashboard'),
 
@@ -140,6 +171,24 @@ export const api = {
 
   getCentralIntakeSummary: (academicYear = '2026-27') =>
     request(`/api/v1/aicte/intake-summary?academic_year=${encodeURIComponent(academicYear)}`),
+
+  getPendingInstitutions: () => request('/api/v1/aicte/pending-institutions'),
+
+  decideInstitutionOnboarding: (institutionId, status, reviewRemarks = null) =>
+    request(`/api/v1/aicte/institutions/${institutionId}/decide`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status, review_remarks: reviewRemarks }),
+    }),
+
+  getCentralTransfers: () => request('/api/v1/aicte/transfers'),
+
+  decideCentralTransfer: (transferId, status, remarks = null) =>
+    request(`/api/v1/aicte/transfers/${transferId}/decide`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status, remarks }),
+    }),
 
   // --- Controlled Academic Verification APIs ---
   getVerifications: (status = null, studentRef = null) => {

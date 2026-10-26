@@ -15,6 +15,7 @@ from app.api import (
     routes_reports,
     routes_aicte,
     routes_verifications,
+    routes_transfers,
 )
 
 # Configure logging
@@ -85,4 +86,5 @@ app.include_router(routes_anomalies.router)
 app.include_router(routes_reports.router)
 app.include_router(routes_aicte.router)
 app.include_router(routes_verifications.router)
+app.include_router(routes_transfers.router)
 

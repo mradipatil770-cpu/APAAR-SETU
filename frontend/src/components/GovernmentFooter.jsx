@@ -1,89 +1,92 @@
 import React from 'react';
+import { getTranslation } from '../i18n/translations';
 
-export default function GovernmentFooter({ onNavigate }) {
+export default function GovernmentFooter({ onNavigate, lang = 'en' }) {
   return (
-    <footer className="gov-portal-footer">
+    <footer className="gov-portal-footer" role="contentinfo">
       <div className="gov-footer-inner">
-        <div className="gov-footer-grid">
-          <div className="gov-footer-col">
-            <h4 className="gov-footer-heading">APAARSetu Institutional Portal</h4>
-            <p className="gov-footer-text">
-              Institutional data management and intake compliance system designed for AICTE-affiliated technical
-              institutions to validate student admission batches, detect cross-enrolment collisions, and enforce sanctioned quotas.
+        {/* Useful Quick Links Bar */}
+        <div className="gov-footer-links-row">
+          <ul className="gov-footer-nav-list">
+            <li>
+              <a href="#about" onClick={(e) => { e.preventDefault(); onNavigate && onNavigate('overview'); }}>
+                {getTranslation('footerAbout', lang)}
+              </a>
+            </li>
+            <li className="footer-link-sep">•</li>
+            <li>
+              <a href="#terms" onClick={(e) => e.preventDefault()}>
+                {getTranslation('footerTerms', lang)}
+              </a>
+            </li>
+            <li className="footer-link-sep">•</li>
+            <li>
+              <a href="#privacy" onClick={(e) => e.preventDefault()}>
+                {getTranslation('footerPrivacy', lang)}
+              </a>
+            </li>
+            <li className="footer-link-sep">•</li>
+            <li>
+              <a href="#hyperlink" onClick={(e) => e.preventDefault()}>
+                {getTranslation('footerHyperlink', lang)}
+              </a>
+            </li>
+            <li className="footer-link-sep">•</li>
+            <li>
+              <a href="#accessibility" onClick={(e) => e.preventDefault()}>
+                {getTranslation('footerAccessibility', lang)}
+              </a>
+            </li>
+            <li className="footer-link-sep">•</li>
+            <li>
+              <a href="#helpdesk" onClick={(e) => e.preventDefault()}>
+                {getTranslation('footerContact', lang)}
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        {/* Official Governance & Attribution Summary */}
+        <div className="gov-footer-editorial-grid">
+          <div className="gov-footer-editorial-text">
+            <p className="gov-footer-statement">
+              {getTranslation('footerManagedBy', lang)}
             </p>
-            <div className="gov-footer-dataset-note">
-              <strong>Demonstration Environment:</strong> Operating with synthetic institutional records for Delhi Institute of Engineering & Technology (AICTE-ENG-001).
+            <p className="gov-footer-hosting">
+              {getTranslation('footerHostedBy', lang)}
+            </p>
+          </div>
+
+          <div className="gov-footer-portals-list">
+            <span className="gov-footer-portals-label">{getTranslation('footerUsefulLinks', lang)}:</span>
+            <div className="gov-portals-badges">
+              <a href="https://www.aicte-india.org" target="_blank" rel="noreferrer" className="gov-portal-badge-link">
+                AICTE India ↗
+              </a>
+              <a href="https://nad.gov.in" target="_blank" rel="noreferrer" className="gov-portal-badge-link">
+                NAD ↗
+              </a>
+              <a href="https://www.abc.gov.in" target="_blank" rel="noreferrer" className="gov-portal-badge-link">
+                ABC ↗
+              </a>
+              <a href="https://www.digilocker.gov.in" target="_blank" rel="noreferrer" className="gov-portal-badge-link">
+                DigiLocker ↗
+              </a>
             </div>
-          </div>
-
-          <div className="gov-footer-col">
-            <h4 className="gov-footer-heading">Portal Navigation</h4>
-            <ul className="gov-footer-links">
-              <li>
-                <button type="button" className="gov-footer-link-btn" onClick={() => onNavigate && onNavigate('overview')}>
-                  Overview Dashboard
-                </button>
-              </li>
-              <li>
-                <button type="button" className="gov-footer-link-btn" onClick={() => onNavigate && onNavigate('upload')}>
-                  Upload Student Data
-                </button>
-              </li>
-              <li>
-                <button type="button" className="gov-footer-link-btn" onClick={() => onNavigate && onNavigate('anomalies')}>
-                  Review Exceptions
-                </button>
-              </li>
-              <li>
-                <button type="button" className="gov-footer-link-btn" onClick={() => onNavigate && onNavigate('verifications')}>
-                  Academic Verifications
-                </button>
-              </li>
-              <li>
-                <button type="button" className="gov-footer-link-btn" onClick={() => onNavigate && onNavigate('reports')}>
-                  Compliance Reports
-                </button>
-              </li>
-            </ul>
-          </div>
-
-          <div className="gov-footer-col">
-            <h4 className="gov-footer-heading">Regulatory Reference Links</h4>
-            <ul className="gov-footer-links">
-              <li>
-                <a href="https://www.aicte-india.org" target="_blank" rel="noreferrer">
-                  All India Council for Technical Education (AICTE) ↗
-                </a>
-              </li>
-              <li>
-                <a href="https://nad.gov.in" target="_blank" rel="noreferrer">
-                  National Academic Depository (NAD) ↗
-                </a>
-              </li>
-              <li>
-                <a href="https://www.abc.gov.in" target="_blank" rel="noreferrer">
-                  Academic Bank of Credits (ABC) ↗
-                </a>
-              </li>
-              <li>
-                <a href="https://www.digilocker.gov.in" target="_blank" rel="noreferrer">
-                  DigiLocker Services ↗
-                </a>
-              </li>
-            </ul>
           </div>
         </div>
       </div>
 
+      {/* Bottom Technical & Compliance Metadata Strip */}
       <div className="gov-footer-bottom">
         <div className="gov-footer-bottom-inner">
           <div className="gov-footer-copyright">
-            Designed for Institutional Compliance & Intake Reconciliation • Standard Format v1.2
+            © 2026 {getTranslation('aicteFull', lang)}. {getTranslation('allRightsReserved', lang)}
           </div>
           <div className="gov-footer-meta">
-            <span>Last Updated: 25 October 2026</span>
+            <span>{getTranslation('lastUpdated', lang)}: 26 October 2026</span>
             <span className="gov-utility-separator">•</span>
-            <span>Version 1.2.0</span>
+            <span>{getTranslation('version', lang)} 2.1.0</span>
           </div>
         </div>
       </div>

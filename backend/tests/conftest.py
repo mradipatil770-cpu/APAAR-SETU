@@ -51,7 +51,14 @@ def setup_test_database():
         code="AICTE-ENG-002",
         name="Pune Technological University (Synthetic)",
     )
-    db.add_all([inst, inst2])
+    # Seed pending verification institution
+    inst_pending = Institution(
+        id="88888888-8888-8888-8888-888888880001",
+        code="AICTE-WEST-2026-88",
+        name="Sardar Vallabhbhai Regional Institute of Technology (Pending)",
+        status="PENDING_VERIFICATION",
+    )
+    db.add_all([inst, inst2, inst_pending])
     db.flush()
 
     # Seed programmes for AICTE-ENG-001

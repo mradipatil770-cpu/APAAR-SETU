@@ -112,6 +112,7 @@ class LoginResponse(BaseModel):
     role: str
     institution_id: Optional[str] = None
     institution_name: Optional[str] = None
+    institution_status: Optional[str] = "ACTIVE"
     access_token: str
     token_type: str = "Bearer"
 
@@ -122,6 +123,7 @@ class UserProfileResponse(BaseModel):
     role: str
     institution_id: Optional[str] = None
     institution_name: Optional[str] = None
+    institution_status: Optional[str] = "ACTIVE"
     is_authenticated: bool
     is_central: bool
 
@@ -200,4 +202,95 @@ class VerificationResponse(BaseModel):
     decision_notes: Optional[str] = None
     decided_at: Optional[datetime] = None
     created_at: datetime
+
+
+# ---------------------------------------------------------
+# Institution Self-Registration (Pending AICTE Approval)
+# ---------------------------------------------------------
+class InstitutionRegistrationRequest(BaseModel):
+    name: str = Field(..., min_length=3, max_length=255)
+    code: str = Field(..., min_length=3, max_length=50) # AICTE Approval ID
+    institution_type: str = Field("CENTRAL_STATE_AFFILIATED", max_length=100)
+    contact_name: str = Field(..., min_length=2, max_length=255)
+    contact_designation: str = Field(..., min_length=2, max_length=100)
+    contact_phone: str = Field(..., min_length=8, max_length=50)
+    state: str = Field(..., min_length=2, max_length=100)
+    address: str = Field(..., min_length=5, max_length=500)
+    admin_email: str = Field(..., min_length=5, max_length=255)
+    password: str = Field(..., min_length=6, max_length=128)
+
+
+class InstitutionRegistrationResponse(BaseModel):
+    institution_id: str
+    code: str
+    name: str
+    status: str
+    message: str
+    admin_email: str
+
+
+class PendingInstitutionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    code: str
+    name: str
+    status: str
+    contact_name: Optional[str] = None
+    contact_designation: Optional[str] = None
+    contact_phone: Optional[str] = None
+    state: Optional[str] = None
+    address: Optional[str] = None
+    institution_type: Optional[str] = None
+    created_at: datetime
+
+
+class InstitutionApprovalRequest(BaseModel):
+    status: str = Field(..., pattern="^(ACTIVE|REJECTED)$")
+    review_remarks: Optional[str] = Field(None, max_length=500)
+
+
+# ---------------------------------------------------------
+# Inter-Institutional Student Transfers & Dual Enrolments
+# ---------------------------------------------------------
+class StudentTransferRequest(BaseModel):
+    student_ref: str = Field(..., min_length=1, max_length=100)
+    to_institution_code: str = Field(..., min_length=2, max_length=50)
+    transfer_reason: str = Field(..., min_length=5, max_length=1000)
+
+
+class StudentTransferDecisionRequest(BaseModel):
+    status: str = Field(..., pattern="^(APPROVED|REJECTED|REQUIRES_POLICY_REVIEW)$")
+    remarks: Optional[str] = Field(None, max_length=1000)
+
+
+class StudentTransferResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    student_id: str
+    student_ref: str
+    from_institution_id: str
+    from_institution_name: Optional[str] = None
+    to_institution_id: str
+    to_institution_name: Optional[str] = None
+    apaar_id_masked: Optional[str] = None
+    transfer_reason: str
+    status: str
+    remarks: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+
+# ---------------------------------------------------------
+# Password Recovery
+# ---------------------------------------------------------
+class ForgotPasswordRequest(BaseModel):
+    email: str = Field(..., min_length=5, max_length=255)
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str = Field(..., min_length=6)
+    new_password: str = Field(..., min_length=6, max_length=128)
+
 

@@ -16,6 +16,13 @@ class Institution(Base):
     id = Column(Uuid(as_uuid=False), primary_key=True, default=generate_uuid)
     code = Column(String(50), unique=True, nullable=False, index=True)
     name = Column(String(255), nullable=False)
+    status = Column(String(50), nullable=False, default="ACTIVE") # ACTIVE, PENDING_VERIFICATION, SUSPENDED
+    contact_name = Column(String(255), nullable=True)
+    contact_designation = Column(String(100), nullable=True)
+    contact_phone = Column(String(50), nullable=True)
+    state = Column(String(100), nullable=True)
+    address = Column(Text, nullable=True)
+    institution_type = Column(String(100), default="CENTRAL_STATE_AFFILIATED")
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), server_default=func.now())
 
     programmes = relationship("Programme", back_populates="institution", cascade="all, delete-orphan")
@@ -129,6 +136,7 @@ class Enrolment(Base):
     programme_id = Column(Uuid(as_uuid=False), ForeignKey("programmes.id", ondelete="CASCADE"), nullable=False)
     academic_year = Column(String(20), nullable=False)
     enrolment_status = Column(String(50), nullable=False, default="VALID")
+    policy_review_status = Column(String(50), nullable=False, default="NORMAL") # NORMAL, REQUIRES_POLICY_REVIEW, CLEARED
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), server_default=func.now())
 
     upload = relationship("DataUpload", back_populates="enrolments")
@@ -223,3 +231,26 @@ class VerificationRequest(Base):
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), server_default=func.now())
 
     institution = relationship("Institution")
+
+
+class StudentTransfer(Base):
+    __tablename__ = "student_transfers"
+
+    id = Column(Uuid(as_uuid=False), primary_key=True, default=generate_uuid)
+    student_id = Column(Uuid(as_uuid=False), ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    from_institution_id = Column(Uuid(as_uuid=False), ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False, index=True)
+    to_institution_id = Column(Uuid(as_uuid=False), ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_ref = Column(String(100), nullable=False)
+    apaar_id_masked = Column(String(20), nullable=True)
+    transfer_reason = Column(Text, nullable=False)
+    status = Column(String(50), nullable=False, default="PENDING_TRANSFER", index=True) # PENDING_TRANSFER, APPROVED, REJECTED, COMPLETED, REQUIRES_POLICY_REVIEW
+    remarks = Column(Text, nullable=True)
+    requested_by = Column(Uuid(as_uuid=False), nullable=True)
+    decided_by = Column(Uuid(as_uuid=False), nullable=True)
+    decided_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), server_default=func.now())
+
+    student = relationship("Student")
+    from_institution = relationship("Institution", foreign_keys=[from_institution_id])
+    to_institution = relationship("Institution", foreign_keys=[to_institution_id])

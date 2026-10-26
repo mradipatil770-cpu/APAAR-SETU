@@ -1,6 +1,16 @@
 import React from 'react';
+import { getTranslation } from '../i18n/translations';
 
-export default function OverviewPage({ dashboardData, loading, onSelectUpload, onNavigateUpload }) {
+export default function OverviewPage({
+  dashboardData,
+  loading,
+  onSelectUpload,
+  onNavigateUpload,
+  currentUser,
+  lang = 'en',
+}) {
+  const isPending = currentUser?.institution_status === 'PENDING_VERIFICATION';
+
   if (loading) {
     return (
       <div className="gov-card" style={{ textAlign: 'center', padding: '48px 24px' }}>
@@ -23,6 +33,20 @@ export default function OverviewPage({ dashboardData, loading, onSelectUpload, o
 
   return (
     <div className="gov-page">
+      {/* Pending Institutional Verification Notice Banner */}
+      {isPending && (
+        <div className="gov-alert-banner warning" style={{ marginBottom: '20px' }} role="alert">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <svg viewBox="0 0 20 20" fill="currentColor" style={{ width: '22px', height: '22px', flexShrink: 0 }}>
+              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+            <div>
+              <strong>{getTranslation('pendingWarningNotice', lang)}</strong>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Institutional Header Banner */}
       <div className="gov-section-header">
         <div>
@@ -31,14 +55,25 @@ export default function OverviewPage({ dashboardData, loading, onSelectUpload, o
             <span>Permanent ID: <strong className="mono">{dashboardData.institution_id.substring(0, 8)}</strong></span>
             <span className="gov-utility-separator">•</span>
             <span>Academic Cycle: <strong>Session 2026–27</strong></span>
+            {isPending && (
+              <>
+                <span className="gov-utility-separator">•</span>
+                <span className="gov-chip gov-chip-warning">PENDING VERIFICATION</span>
+              </>
+            )}
           </div>
         </div>
         <div>
-          <button className="gov-btn gov-btn-primary" onClick={onNavigateUpload}>
+          <button
+            className={`gov-btn ${isPending ? 'gov-btn-outline' : 'gov-btn-primary'}`}
+            onClick={isPending ? undefined : onNavigateUpload}
+            disabled={isPending}
+            title={isPending ? 'Upload is restricted while institution is PENDING_VERIFICATION' : 'Upload student records'}
+          >
             <svg viewBox="0 0 20 20" fill="currentColor" style={{ width: '16px', height: '16px' }}>
               <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
             </svg>
-            <span>Upload Student Data</span>
+            <span>{isPending ? 'Upload Restricted (Pending Approval)' : 'Upload Student Data'}</span>
           </button>
         </div>
       </div>

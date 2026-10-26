@@ -2413,6 +2413,213 @@ body {
   height: 16px;
 }
 
+/* Language switcher button */
+.gov-lang-indicator-btn {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--gov-navy);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.15s ease;
+}
+
+.gov-lang-indicator-btn:hover {
+  background: var(--bg-subtle);
+  border-color: var(--gov-blue-accent);
+}
+
+/* Regulatory Directive Banner (PM-KISAN / SIH 2026 Inspiration) */
+.gov-directive-banner {
+  background: #fffbeb;
+  border-bottom: 2px solid #f59e0b;
+  padding: 12px 24px;
+}
+
+.gov-directive-banner-inner {
+  max-width: 1240px;
+  margin: 0 auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.gov-directive-icon-badge {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+  border-radius: 6px;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.gov-directive-svg {
+  width: 22px;
+  height: 22px;
+}
+
+.gov-directive-content {
+  flex: 1;
+}
+
+.gov-directive-title {
+  display: block;
+  font-size: 0.85rem;
+  color: #92400e;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+.gov-directive-body {
+  font-size: 0.82rem;
+  color: #78350f;
+  line-height: 1.45;
+  margin: 0;
+}
+
+/* Two-column grid inside form */
+.gov-form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+@media (max-width: 640px) {
+  .gov-form-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Modal Dialog Styles */
+.gov-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+}
+
+.gov-modal-card {
+  background: #ffffff;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  max-width: 580px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.gov-modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8fafc;
+}
+
+.gov-modal-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--gov-navy);
+  margin: 0;
+}
+
+.gov-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.gov-modal-body {
+  padding: 20px;
+}
+
+.gov-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* Progress bar */
+.gov-progress-bar-bg {
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.gov-progress-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+/* Organisers Bar (SIH 2026 Reference Inspiration) */
+.portal-organisers-section {
+  background: #ffffff;
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 24px;
+  text-align: center;
+  margin-top: 40px;
+}
+
+.portal-organisers-title {
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--gov-navy);
+  margin-bottom: 16px;
+}
+
+.portal-organisers-grid {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.portal-organisers-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.portal-organisers-item strong {
+  font-size: 0.9rem;
+  color: var(--text-dark);
+}
+
+.portal-organisers-item span {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.portal-organisers-separator {
+  color: var(--border-color);
+  font-size: 1.2rem;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .portal-intro-grid {
@@ -2435,3 +2642,722 @@ body {
   }
 }
 
+
+
+
+/* =============================================================================
+   MahaDBT & NIC Administrative Portal Layout System
+   Reference: MahaDBT Aaple Sarkar / NIC SwaaS Government Design System
+   ============================================================================= */
+
+.mahadbt-landing-root {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 12px 16px 28px;
+}
+
+/* 1. MahaDBT Top Red Notice Alert Ticker */
+.mahadbt-alert-ticker {
+  background: #fff5f5;
+  border: 1px solid #fca5a5;
+  border-left: 4px solid #dc2626;
+  border-radius: 3px;
+  padding: 8px 14px;
+  margin-bottom: 14px;
+}
+
+.mahadbt-alert-ticker-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.84rem;
+  color: #991b1b;
+}
+
+.mahadbt-alert-badge {
+  background: #dc2626;
+  color: #ffffff;
+  padding: 2px 7px;
+  border-radius: 2px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.mahadbt-alert-text {
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* 2. Three-Column Grid Layout */
+.mahadbt-layout-grid {
+  display: grid;
+  grid-template-columns: 260px 1fr 260px;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 1080px) {
+  .mahadbt-layout-grid {
+    grid-template-columns: 240px 1fr;
+  }
+  .mahadbt-col-right {
+    grid-column: span 2;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .mahadbt-layout-grid {
+    grid-template-columns: 1fr;
+  }
+  .mahadbt-col-right {
+    grid-column: span 1;
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 3. Panel Cards */
+.mahadbt-panel {
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.mahadbt-panel-header {
+  padding: 9px 14px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+}
+
+.mahadbt-panel-header h3 {
+  font-size: 0.86rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.mahadbt-panel-header.primary-blue {
+  background: #0b2545;
+  color: #ffffff;
+}
+
+.mahadbt-panel-header.warning-orange {
+  background: #fff7ed;
+  color: #c2410c;
+  border-bottom: 2px solid #ea580c;
+}
+
+.mahadbt-panel-header.action-header {
+  background: #0f3973;
+  color: #ffffff;
+}
+
+.mahadbt-panel-header.gray-header {
+  background: #f1f5f9;
+  color: #1e293b;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.panel-title-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Left Column: Guidelines List */
+.mahadbt-guidelines-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.mahadbt-guide-item {
+  padding: 10px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.8rem;
+  color: #1e3a8a;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background 0.15s ease;
+}
+
+.mahadbt-guide-item:last-child {
+  border-bottom: none;
+}
+
+.mahadbt-guide-item:hover {
+  background: #f0f7ff;
+  color: #1d4ed8;
+}
+
+.guide-icon {
+  font-size: 1rem;
+}
+
+/* Left Column: Notice Board */
+.mahadbt-notice-list {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mahadbt-notice-item {
+  display: flex;
+  gap: 8px;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.notice-bullet {
+  color: #ea580c;
+  font-weight: bold;
+}
+
+.notice-heading {
+  color: #9a3412;
+  display: block;
+  font-size: 0.8rem;
+  margin-bottom: 2px;
+}
+
+.notice-desc {
+  color: #475569;
+}
+
+.compliance-box {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+}
+
+.compliance-inner {
+  padding: 12px 14px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.compliance-shield {
+  font-size: 1.4rem;
+}
+
+.compliance-text strong {
+  font-size: 0.78rem;
+  color: #0b2545;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.compliance-text p {
+  font-size: 0.74rem;
+  color: #64748b;
+  line-height: 1.35;
+}
+
+/* Center Column: Hero & Accordions */
+.mahadbt-center-hero {
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: 22px 24px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.hero-kicker {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #1351b4;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+.hero-main-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #0b2545;
+  line-height: 1.3;
+  margin-bottom: 8px;
+}
+
+.hero-main-desc {
+  font-size: 0.86rem;
+  color: #334155;
+  line-height: 1.55;
+  margin-bottom: 16px;
+}
+
+.hero-action-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn-arrow {
+  margin-left: 6px;
+}
+
+/* Center Column: Schemes Accordion (MahaDBT Style) */
+.mahadbt-schemes-container {
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.schemes-header-bar {
+  background: #fef3c7;
+  border-bottom: 2px solid #f59e0b;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.schemes-header-bar h2 {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #92400e;
+  margin: 0;
+}
+
+.schemes-bar-icon {
+  font-size: 1.1rem;
+}
+
+.schemes-accordion-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.scheme-accordion-item {
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.scheme-accordion-item:last-child {
+  border-bottom: none;
+}
+
+.scheme-accordion-trigger {
+  width: 100%;
+  background: #ffffff;
+  border: none;
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #0b2545;
+  transition: background 0.15s ease;
+  text-align: left;
+}
+
+.scheme-accordion-trigger:hover {
+  background: #f8fafc;
+}
+
+.trigger-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.scheme-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: #1351b4;
+}
+
+.scheme-icon-wrap svg {
+  width: 18px;
+  height: 18px;
+}
+
+.scheme-title-text {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.trigger-toggle-indicator {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #1351b4;
+}
+
+.scheme-accordion-body {
+  padding: 14px 20px 18px 50px;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  font-size: 0.82rem;
+  color: #334155;
+  line-height: 1.55;
+}
+
+.scheme-body-desc {
+  margin-bottom: 8px;
+}
+
+.scheme-specs-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.spec-check {
+  color: #16a34a;
+  font-weight: bold;
+  margin-right: 6px;
+}
+
+/* Right Column: Action Buttons */
+.mahadbt-action-menu {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mahadbt-action-btn {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 3px;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #1e293b;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.mahadbt-action-btn:hover {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #1d4ed8;
+}
+
+.register-action {
+  border-left: 4px solid #ea580c;
+}
+
+.login-action {
+  border-left: 4px solid #16a34a;
+}
+
+.central-action {
+  border-left: 4px solid #1351b4;
+}
+
+.track-action {
+  border-left: 4px solid #0b2545;
+}
+
+.action-btn-icon {
+  font-size: 1rem;
+}
+
+/* Right Column: User Manuals */
+.mahadbt-manuals-list {
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.manual-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.76rem;
+  color: #475569;
+}
+
+.pdf-icon {
+  font-size: 0.85rem;
+}
+
+.support-panel {
+  padding: 10px 14px;
+}
+
+.support-links-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.support-link-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* Authentication Dual-Pane in LoginPage */
+.mahadbt-auth-card {
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.mahadbt-login-dual-pane {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  border-top: 1px solid #e2e8f0;
+}
+
+@media (max-width: 900px) {
+  .mahadbt-login-dual-pane {
+    grid-template-columns: 1fr;
+  }
+  .mahadbt-login-instructions-box {
+    border-top: 1px solid #e2e8f0;
+    border-left: none !important;
+  }
+}
+
+.mahadbt-login-form-box {
+  padding: 22px 24px;
+}
+
+.form-sub-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  color: #b91c1c;
+}
+
+.form-sub-header h3 {
+  font-size: 0.95rem;
+  font-weight: 800;
+  margin: 0;
+  color: #b91c1c;
+}
+
+.header-arrow {
+  font-size: 1.1rem;
+}
+
+.mahadbt-captcha-box {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 3px;
+  padding: 10px 12px;
+  margin: 12px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.captcha-display-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.captcha-graphic {
+  background: #eff6ff;
+  border: 1px dashed #3b82f6;
+  padding: 6px 14px;
+  border-radius: 3px;
+  font-family: monospace;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 0.25em;
+  color: #1e3a8a;
+  user-select: none;
+}
+
+.captcha-refresh-btn {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 3px;
+  padding: 4px 8px;
+  font-size: 0.72rem;
+  color: #475569;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.captcha-refresh-btn:hover {
+  background: #f1f5f9;
+}
+
+.mahadbt-login-actions-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 14px;
+}
+
+.mahadbt-btn-login {
+  background: #15803d !important;
+  border-color: #15803d !important;
+  color: #ffffff !important;
+  font-weight: 700;
+  padding: 8px 18px;
+}
+
+.mahadbt-btn-login:hover {
+  background: #166534 !important;
+}
+
+.mahadbt-login-instructions-box {
+  padding: 22px 20px;
+  background: #f8fafc;
+  border-left: 1px solid #e2e8f0;
+}
+
+.instructions-header h4 {
+  font-size: 0.86rem;
+  font-weight: 800;
+  color: #0b2545;
+  margin: 0 0 12px 0;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 6px;
+}
+
+.instructions-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 0.78rem;
+  color: #334155;
+  line-height: 1.45;
+}
+
+.instructions-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.bullet-icon {
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+/* Footer Editorial & Nav Links */
+.gov-footer-links-row {
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.gov-footer-nav-list {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.78rem;
+}
+
+.gov-footer-nav-list a {
+  color: #cbd5e1;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.gov-footer-nav-list a:hover {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+.footer-link-sep {
+  color: #64748b;
+  font-size: 0.7rem;
+}
+
+.gov-footer-editorial-grid {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.gov-footer-editorial-text {
+  flex: 1;
+  min-width: 280px;
+}
+
+.gov-footer-statement {
+  font-size: 0.82rem;
+  color: #e2e8f0;
+  line-height: 1.5;
+  margin-bottom: 4px;
+}
+
+.gov-footer-hosting {
+  font-size: 0.76rem;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+.gov-footer-portals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gov-footer-portals-label {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+.gov-portals-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.gov-portal-badge-link {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+  padding: 4px 10px;
+  font-size: 0.76rem;
+  color: #f1f5f9;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.gov-portal-badge-link:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}

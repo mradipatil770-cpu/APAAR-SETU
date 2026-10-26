@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.database.session import get_db
 from app.core.security import get_current_user_context, AuthenticatedContext, enforce_institution_access
 from app.schemas.schemas import UploadResponse, UploadDetailResponse, ValidationIssueResponse
-from app.models.models import DataUpload, ValidationIssue
+from app.models.models import DataUpload, ValidationIssue, Institution
 from app.services.upload_service import process_upload_transaction
 
 router = APIRouter(prefix="/api/v1/uploads", tags=["Uploads"])
@@ -38,6 +38,14 @@ async def upload_csv_file(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Forbidden: Insufficient privileges to upload institutional CSV records.",
+        )
+
+    # Enforce non-privileged isolation: Pending institutions cannot ingest records
+    inst = db.query(Institution).filter(Institution.id == auth.institution_id).first()
+    if inst and getattr(inst, "status", "ACTIVE") == "PENDING_VERIFICATION":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: Institution registration is currently in 'PENDING_VERIFICATION' state. Student enrolment uploads are restricted until AICTE Central Regulatory Bureau approves your institution.",
         )
 
     if not file.filename or not file.filename.lower().endswith(".csv"):

@@ -10,6 +10,7 @@ import UploadPage from './pages/UploadPage';
 import UploadDetailPage from './pages/UploadDetailPage';
 import AnomalyReviewPage from './pages/AnomalyReviewPage';
 import InstitutionalVerificationsTab from './pages/InstitutionalVerificationsTab';
+import InstitutionalTransfersTab from './pages/InstitutionalTransfersTab';
 import ReportsPage from './pages/ReportsPage';
 import { api } from './services/api';
 
@@ -17,9 +18,20 @@ export default function App() {
   // Navigation & View state
   const [currentView, setCurrentView] = useState('landing'); // 'landing' | 'login' | 'dashboard'
   const [currentUser, setCurrentUser] = useState(null);
+  const [lang, setLang] = useState(() => localStorage.getItem('apaarsetu_lang') || 'en');
+
+  const handleToggleLang = () => {
+    const nextLang = lang === 'en' ? 'hi' : 'en';
+    setLang(nextLang);
+    try {
+      localStorage.setItem('apaarsetu_lang', nextLang);
+    } catch {
+      // ignore
+    }
+  };
 
   // Institutional tab state
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'upload' | 'upload-detail' | 'anomalies' | 'verifications' | 'reports'
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'upload' | 'upload-detail' | 'anomalies' | 'verifications' | 'transfers' | 'reports'
   const [selectedUploadId, setSelectedUploadId] = useState(null);
   const [dashboardData, setDashboardData] = useState(null);
   const [loadingDashboard, setLoadingDashboard] = useState(true);
@@ -121,6 +133,8 @@ export default function App() {
         onSignIn={() => setCurrentView('login')}
         onSignOut={handleSignOut}
         onGoHome={() => setCurrentView('landing')}
+        lang={lang}
+        onToggleLang={handleToggleLang}
       />
 
       {/* 2. Official Primary Navigation Bar (Rendered when in dashboard or when logged in) */}
@@ -133,6 +147,7 @@ export default function App() {
           currentUser={currentUser}
           onSignOut={handleSignOut}
           onViewLanding={() => setCurrentView('landing')}
+          lang={lang}
         />
       )}
 
@@ -160,6 +175,7 @@ export default function App() {
         {currentView === 'landing' && (
           <LandingPage
             onGoLogin={() => setCurrentView('login')}
+            lang={lang}
             onExploreDirectory={() => {
               if (currentUser) {
                 setCurrentView('dashboard');
@@ -175,6 +191,7 @@ export default function App() {
           <LoginPage
             onLoginSuccess={handleLoginSuccess}
             onCancel={() => setCurrentView('landing')}
+            lang={lang}
           />
         )}
 
@@ -186,6 +203,7 @@ export default function App() {
               <CentralAicteDashboard
                 user={currentUser}
                 onSignOut={handleSignOut}
+                lang={lang}
               />
             ) : (
               /* INSTITUTIONAL WORKSPACE */
@@ -196,6 +214,8 @@ export default function App() {
                     loading={loadingDashboard}
                     onSelectUpload={handleSelectUpload}
                     onNavigateUpload={() => handleNavigate('upload')}
+                    currentUser={currentUser}
+                    lang={lang}
                   />
                 )}
 
@@ -228,6 +248,10 @@ export default function App() {
 
                 {activeTab === 'verifications' && (
                   <InstitutionalVerificationsTab currentUser={currentUser} />
+                )}
+
+                {activeTab === 'transfers' && (
+                  <InstitutionalTransfersTab currentUser={currentUser} lang={lang} />
                 )}
 
                 {activeTab === 'reports' && (
