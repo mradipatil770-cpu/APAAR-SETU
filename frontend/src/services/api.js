@@ -216,4 +216,26 @@ export const api = {
         decision_notes: notes || 'Verified by institutional authority.',
       }),
     }),
+
+  getCentralStudents: (search = null, limit = 50, offset = 0) => {
+    const params = new URLSearchParams();
+    if (search) params.append('search', search);
+    params.append('limit', limit);
+    params.append('offset', offset);
+    return request(`/api/v1/aicte/students?${params.toString()}`);
+  },
+
+  getCentralAuditLogs: (limit = 50) =>
+    request(`/api/v1/aicte/audit-logs?limit=${limit}`),
+
+  getInstitutionStudents: (search = null, limit = 50, offset = 0) => {
+    const params = new URLSearchParams();
+    if (search) params.append('search', search);
+    params.append('limit', limit);
+    params.append('offset', offset);
+    return request(`/api/v1/institution/students?${params.toString()}`);
+  },
+
+  getInstitutionAuditLogs: (limit = 50) =>
+    request(`/api/v1/institution/audit-logs?limit=${limit}`),
 };

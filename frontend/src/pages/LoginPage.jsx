@@ -43,7 +43,7 @@ export default function LoginPage({ onLoginSuccess, onCancel, lang = 'en', initi
     { label: 'Central AICTE Director', email: 'aicte_director@aicte-india.org.synthetic', icon: '🏛️' },
     { label: 'AICTE Regulatory Analyst', email: 'analyst@aicte-india.org.synthetic', icon: '📊' },
     { label: 'Central Compliance Auditor', email: 'auditor@aicte-india.org.synthetic', icon: '⚖️' },
-    { label: 'Institutional Registrar (Delhi Tech)', email: 'demo_admin@delhi-tech.edu.synthetic', icon: '🎓' },
+    { label: 'College Registrar (KIT Kolhapur)', email: 'registrar@kit-kolhapur.edu.in', icon: '🎓' },
     { label: 'SV Regional Institute (Pending)', email: 'principal@svrit-nagpur.ac.in.synthetic', icon: '⏳' },
   ];
 

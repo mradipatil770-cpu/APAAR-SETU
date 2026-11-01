@@ -146,34 +146,44 @@ export default function GovernmentHeader({
             <div className="gov-brand-text">
               <div className="gov-brand-title">APAARSetu</div>
               <div className="gov-brand-subtitle">
-                {lang === 'hi'
-                  ? 'अपार आईडी आधारित विद्यार्थी डेटा व्यवस्थापन व सत्यापन मंच'
-                  : 'APAAR ID-Based Student Data Management & Verification Platform'}
+                {currentUser ? (
+                  currentUser.role?.startsWith('AICTE_') || currentUser.role === 'AUDITOR' ? (
+                    lang === 'hi' ? 'अखिल भारतीय तंत्रशिक्षण परिषद — केंद्रीय प्रशासन पोर्टल' : 'AICTE Central Administration Portal'
+                  ) : (
+                    lang === 'hi'
+                      ? `संस्थान पोर्टल — ${currentUser.institution_name || 'KIT College of Engineering, Kolhapur'}`
+                      : `Institutional Portal — ${currentUser.institution_name || 'KIT College of Engineering, Kolhapur'}`
+                  )
+                ) : (
+                  lang === 'hi'
+                    ? 'अपार आईडी आधारित विद्यार्थी डेटा व्यवस्थापन व सत्यापन मंच'
+                    : 'APAAR ID-Based Student Data Management & Verification Platform'
+                )}
               </div>
             </div>
           </div>
 
-          {/* Right: Navigation Items + Login + Register Buttons */}
+          {/* Right: Navigation Items (Public) OR Administrator Profile (Logged In) */}
           <div className="gov-nav-and-actions">
-            <nav className={`gov-main-nav-links ${mobileMenuOpen ? 'mobile-open' : ''}`} aria-label="Primary Navigation">
-              <ul className="gov-nav-menu-list">
-                {navItems.map((item) => (
-                  <li key={item.key} className="gov-nav-item">
-                    <button
-                      type="button"
-                      className={`gov-nav-btn ${activeNav === item.key ? 'nav-active' : ''}`}
-                      onClick={() => handleNavSelect(item.key)}
-                    >
-                      {item.label}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </nav>
+            {!currentUser ? (
+              <>
+                <nav className={`gov-main-nav-links ${mobileMenuOpen ? 'mobile-open' : ''}`} aria-label="Primary Navigation">
+                  <ul className="gov-nav-menu-list">
+                    {navItems.map((item) => (
+                      <li key={item.key} className="gov-nav-item">
+                        <button
+                          type="button"
+                          className={`gov-nav-btn ${activeNav === item.key ? 'nav-active' : ''}`}
+                          onClick={() => handleNavSelect(item.key)}
+                        >
+                          {item.label}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </nav>
 
-            <div className="gov-nav-cta-buttons">
-              {!currentUser ? (
-                <>
+                <div className="gov-nav-cta-buttons">
                   <button
                     type="button"
                     className="gov-header-login-btn"
@@ -191,39 +201,72 @@ export default function GovernmentHeader({
                     <span className="gov-reg-icon" aria-hidden="true">🏛️</span>
                     <span>{getTranslation('btnRegisterInst', lang)}</span>
                   </button>
-                </>
-              ) : (
-                <div className="gov-header-user-group">
-                  <div className="gov-auth-chip">
-                    <span className="auth-chip-role">{currentUser.role}</span>
-                    <span className="auth-chip-email">{currentUser.email}</span>
-                  </div>
-                  <button
-                    type="button"
-                    className="gov-header-logout-btn"
-                    onClick={onSignOut}
-                  >
-                    {getTranslation('navLogout', lang)}
-                  </button>
                 </div>
-              )}
+              </>
+            ) : (
+              <div className="gov-admin-profile-bar">
+                {/* System Notifications Icon */}
+                <button
+                  type="button"
+                  className="gov-header-notif-btn"
+                  title="System Notifications"
+                  aria-label="Notifications"
+                >
+                  <span aria-hidden="true">🔔</span>
+                  <span className="gov-notif-dot" />
+                </button>
+
+                <div className="admin-profile-chip">
+                  <div className="admin-avatar-circle" aria-hidden="true">
+                    {currentUser.role === 'AICTE_ADMIN' ? '🏛️' : '🎓'}
+                  </div>
+                  <div className="admin-profile-details">
+                    <span className="admin-profile-name">
+                      {currentUser.role === 'AICTE_ADMIN'
+                        ? 'Dr. R. K. Sharma'
+                        : (currentUser.role === 'institution_admin' || currentUser.email?.includes('kit')
+                            ? 'Registrar Office'
+                            : (currentUser.email?.split('@')[0] || 'Administrator'))}
+                    </span>
+                    <span className="admin-profile-role">
+                      {currentUser.role === 'AICTE_ADMIN'
+                        ? 'AICTE Central Administrator'
+                        : (currentUser.role === 'institution_admin'
+                            ? (lang === 'hi' ? 'कुलसचिव (Registrar)' : 'College Registrar')
+                            : (currentUser.role === 'INSTITUTE_OPERATOR' ? 'Institute Operator' : currentUser.role))}
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="gov-admin-signout-btn" 
+                  onClick={onSignOut}
+                  title="Sign Out"
+                >
+                  <span aria-hidden="true">🚪</span>
+                  <span>{getTranslation('navLogout', lang)}</span>
+                </button>
+              </div>
+            )}
 
               {/* Mobile Menu Toggle Button */}
-              <button
-                type="button"
-                className="gov-mobile-hamburger"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                aria-label="Toggle navigation menu"
-                aria-expanded={mobileMenuOpen}
-              >
-                <span className="hamburger-bar" />
-                <span className="hamburger-bar" />
-                <span className="hamburger-bar" />
-              </button>
+              {!currentUser && (
+                <button
+                  type="button"
+                  className="gov-mobile-hamburger"
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  aria-label="Toggle navigation menu"
+                  aria-expanded={mobileMenuOpen}
+                >
+                  <span className="hamburger-bar" />
+                  <span className="hamburger-bar" />
+                  <span className="hamburger-bar" />
+                </button>
+              )}
             </div>
           </div>
         </div>
-      </div>
-    </header>
-  );
-}
+      </header>
+    );
+  }

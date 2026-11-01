@@ -1,10 +1,16 @@
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from app.database.session import get_db
-from app.core.security import get_current_user_context, AuthenticatedContext, require_role, Role
+from app.core.security import (
+    get_current_user_context,
+    AuthenticatedContext,
+    require_role,
+    Role,
+    enforce_institution_access,
+)
 from app.schemas.schemas import DashboardStats, AdminDashboardStats, ProgrammeIntakeStat
 from app.models.models import (
     Institution,
@@ -13,6 +19,8 @@ from app.models.models import (
     Programme,
     ApprovedIntake,
     Enrolment,
+    Student,
+    AuditLog,
 )
 
 router = APIRouter(prefix="/api/v1", tags=["Dashboard"])
@@ -168,4 +176,98 @@ def get_admin_dashboard(
         total_open_anomalies=total_open_anomalies,
         institution_summaries=summaries,
     )
+
+
+@router.get("/institution/students")
+def list_institution_students(
+    search: Optional[str] = Query(None, description="Search by student reference or APAAR ID"),
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+    auth: AuthenticatedContext = Depends(get_current_user_context),
+):
+    """
+    Searchable student records for the authenticated institution with masked APAAR IDs.
+    """
+    if not auth.institution_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Institution identity context required.",
+        )
+    enforce_institution_access(auth, auth.institution_id)
+
+    query = db.query(Student).filter(Student.institution_id == auth.institution_id)
+    if search:
+        s = f"%{search.strip()}%"
+        query = query.filter((Student.student_ref.ilike(s)) | (Student.apaar_id.ilike(s)))
+
+    total = query.count()
+    students = query.order_by(Student.created_at.desc()).offset(offset).limit(limit).all()
+
+    # Pre-fetch enrolments to get programme information
+    student_ids = [s.id for s in students]
+    enrolment_rows = (
+        db.query(Enrolment, Programme)
+        .join(Programme, Enrolment.programme_id == Programme.id)
+        .filter(Enrolment.student_id.in_(student_ids), Enrolment.institution_id == auth.institution_id)
+        .all()
+    ) if student_ids else []
+
+    enrolment_by_stu = {e[0].student_id: (e[0], e[1]) for e in enrolment_rows}
+
+    return {
+        "total": total,
+        "students": [
+            {
+                "id": str(s.id),
+                "student_ref": s.student_ref,
+                "apaar_id_masked": f"XXXXXXXX{s.apaar_id[-4:]}" if s.apaar_id and len(s.apaar_id) >= 4 else "XXXXXXXX0000",
+                "programme_name": enrolment_by_stu[s.id][1].name if s.id in enrolment_by_stu else "General B.Tech",
+                "programme_code": enrolment_by_stu[s.id][1].code if s.id in enrolment_by_stu else "ENG",
+                "academic_year": enrolment_by_stu[s.id][0].academic_year if s.id in enrolment_by_stu else "2026-27",
+                "enrolment_status": enrolment_by_stu[s.id][0].enrolment_status if s.id in enrolment_by_stu else "VALID",
+                "created_at": s.created_at.isoformat() if s.created_at else None,
+            }
+            for s in students
+        ],
+    }
+
+
+@router.get("/institution/audit-logs")
+def list_institution_audit_logs(
+    limit: int = Query(50, ge=1, le=100),
+    db: Session = Depends(get_db),
+    auth: AuthenticatedContext = Depends(get_current_user_context),
+):
+    """
+    Retrieves immutable regulatory audit logs for the authenticated institution.
+    """
+    if not auth.institution_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Institution identity context required.",
+        )
+    enforce_institution_access(auth, auth.institution_id)
+
+    logs = (
+        db.query(AuditLog)
+        .filter(AuditLog.institution_id == auth.institution_id)
+        .order_by(AuditLog.created_at.desc())
+        .limit(limit)
+        .all()
+    )
+
+    return [
+        {
+            "id": str(log.id),
+            "timestamp": log.created_at.isoformat() if log.created_at else None,
+            "actor_role": log.actor_role or "INSTITUTE_ADMIN",
+            "action": log.action,
+            "target_id": log.target_id,
+            "details": log.details,
+            "status": log.status,
+        }
+        for log in logs
+    ]
+
 

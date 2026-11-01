@@ -256,7 +256,7 @@ async def get_current_user_context(
 
         return AuthenticatedContext(
             user_id=user_uuid,
-            email=payload.get("email", "registrar@delhi-tech.edu.synthetic"),
+            email=payload.get("email", "registrar@kit-kolhapur.edu.in"),
             institution_id=user_inst,
             role=user_role,
             is_authenticated=True,
@@ -273,7 +273,7 @@ async def get_current_user_context(
     # Local prototype mode context (explicit synthetic institutional access)
     return AuthenticatedContext(
         user_id=DEFAULT_DEMO_USER_ID,
-        email="registrar@delhi-tech.edu.synthetic",
+        email="registrar@kit-kolhapur.edu.in",
         institution_id=DEFAULT_DEMO_INSTITUTION_ID,
         role=Role.INSTITUTE_ADMIN,
         is_authenticated=False,

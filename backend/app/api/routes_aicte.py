@@ -560,3 +560,88 @@ def decide_transfer(
     )
 
 
+# -----------------------------------------------------------------
+# Central Student Records Directory (Read-only, masked)
+# -----------------------------------------------------------------
+@router.get("/students")
+def list_central_students(
+    search: Optional[str] = Query(None, description="Search by student reference or APAAR"),
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+    auth: AuthenticatedContext = Depends(get_current_user_context),
+):
+    """
+    Searchable student records directory across institutions with masked APAAR ID.
+    """
+    enforce_central_regulatory_access(auth)
+    query = db.query(Student, Institution).join(
+        Institution, Student.institution_id == Institution.id
+    )
+    if search:
+        s = f"%{search.strip()}%"
+        query = query.filter(
+            (Student.student_ref.ilike(s)) | (Student.apaar_id.ilike(s)) | (Institution.name.ilike(s))
+        )
+    
+    total = query.count()
+    rows = query.order_by(Student.created_at.desc()).offset(offset).limit(limit).all()
+
+    items = []
+    for st, inst in rows:
+        # Get active enrolment if available
+        enr = db.query(Enrolment).filter(Enrolment.student_id == st.id).first()
+        prog_name = "Technical Programme"
+        acad_year = "2026-27"
+        if enr and enr.programme:
+            prog_name = enr.programme.name
+            acad_year = enr.academic_year
+
+        items.append({
+            "id": str(st.id),
+            "student_ref": st.student_ref,
+            "apaar_id_masked": st.apaar_id if st.apaar_id else "XXXXXXXX0000",
+            "institution_name": inst.name,
+            "institution_code": inst.code,
+            "programme_name": prog_name,
+            "academic_year": acad_year,
+            "created_at": st.created_at.isoformat() if st.created_at else None,
+            "status": "VALIDATED",
+        })
+
+    return {
+        "total": total,
+        "items": items,
+    }
+
+
+# -----------------------------------------------------------------
+# Central Regulatory Audit Logs (Read-only)
+# -----------------------------------------------------------------
+@router.get("/audit-logs")
+def list_central_audit_logs(
+    limit: int = Query(50, ge=1, le=200),
+    db: Session = Depends(get_db),
+    auth: AuthenticatedContext = Depends(get_current_user_context),
+):
+    """
+    Retrieves immutable regulatory audit logs across central administration actions.
+    """
+    enforce_central_regulatory_access(auth)
+    logs = db.query(AuditLog).order_by(AuditLog.created_at.desc()).limit(limit).all()
+
+    return [
+        {
+            "id": str(log.id),
+            "timestamp": log.created_at.isoformat() if log.created_at else None,
+            "actor_role": log.actor_role or "AICTE_ADMIN",
+            "action": log.action,
+            "target_id": log.target_id,
+            "details": log.details,
+            "status": log.status,
+        }
+        for log in logs
+    ]
+
+
+

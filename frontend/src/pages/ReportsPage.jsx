@@ -38,11 +38,11 @@ export default function ReportsPage({ currentUser }) {
           <div className="gov-report-scope-grid">
             <div>
               <span className="gov-report-scope-label">Institution:</span>
-              <span>{currentUser?.institution_name || 'Delhi Institute of Engineering & Technology'}</span>
+              <span>{currentUser?.institution_name || 'KIT College of Engineering, Kolhapur'}</span>
             </div>
             <div>
               <span className="gov-report-scope-label">AICTE Permanent Code:</span>
-              <span className="mono">{currentUser?.institution_id ? 'AICTE-ENG-001' : 'REGULATORY-HQ'}</span>
+              <span className="mono">{currentUser?.institution_code || '[Pending AICTE Allocation]'}</span>
             </div>
             <div>
               <span className="gov-report-scope-label">Academic Calendar:</span>

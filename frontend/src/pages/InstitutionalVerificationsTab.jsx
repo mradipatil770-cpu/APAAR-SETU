@@ -65,7 +65,7 @@ export default function InstitutionalVerificationsTab({ currentUser }) {
 
   const handleCreateRequest = async (e) => {
     e.preventDefault();
-    const instId = currentUser?.institution_id || '11111111-1111-1111-1111-111111111111';
+    const instId = currentUser?.institution_id;
     if (!newStudentRef.trim() || !newOrg.trim() || !newEmail.trim()) {
       setFeedbackMsg({
         type: 'error',
