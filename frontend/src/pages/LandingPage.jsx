@@ -1,7 +1,12 @@
 import React from 'react';
 import { getTranslation } from '../i18n/translations';
 
-export default function LandingPage({ onGoLogin, onGoRegister, lang = 'en' }) {
+export default function LandingPage({
+  onGoLogin,
+  onGoRegister,
+  onNavigatePage,
+  lang = 'en',
+}) {
   const handleRegisterClick = () => {
     if (onGoRegister) {
       onGoRegister();
@@ -10,20 +15,35 @@ export default function LandingPage({ onGoLogin, onGoRegister, lang = 'en' }) {
     }
   };
 
-  const handleScrollToSection = (id) => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
+  const handleBoxClick = (pageKey) => {
+    if (onNavigatePage) {
+      onNavigatePage(pageKey);
+    } else if (onGoLogin) {
+      onGoLogin();
     }
   };
 
   return (
     <div className="gov-new-landing-wrapper">
-      {/* 1. Hero Section (Split Layout: Text & CTA on Left, Indian Students Photo on Right) */}
-      <section className="gov-hero-split-section" aria-labelledby="hero-title" id="home">
-        <div className="gov-hero-split-container">
-          {/* Left Text Block */}
-          <div className="gov-hero-left-col">
+      {/* 1. Full-Width Edge-to-Edge Hero Section: Boy & Girl Image stretched across boundary, Text & Buttons overlay on top */}
+      <section className="gov-hero-fullbleed-section" aria-labelledby="hero-title" id="home">
+        {/* Full-bleed background student photo */}
+        <div className="gov-hero-bg-frame" aria-hidden="true">
+          <img
+            src="/assets/hero-students.jpg"
+            alt="Students collaborating on campus with laptop"
+            className="gov-hero-fullbleed-img"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+          {/* Transparent on right to reveal students' faces, deep tint on left for text clarity */}
+          <div className="gov-hero-fullbleed-overlay" />
+        </div>
+
+        {/* Foreground Content positioned over image (Starts from leftmost screen boundary) */}
+        <div className="gov-hero-fullbleed-content">
+          <div className="gov-hero-content-card">
             <h1 id="hero-title" className="gov-hero-title-bold">
               {getTranslation('heroMainTitle', lang)}
             </h1>
@@ -55,48 +75,29 @@ export default function LandingPage({ onGoLogin, onGoRegister, lang = 'en' }) {
               </button>
             </div>
           </div>
-
-          {/* Right Photographic Image Block */}
-          <div className="gov-hero-right-col" aria-hidden="true">
-            <div className="gov-hero-image-frame">
-              <img
-                src="/assets/hero-students.jpg"
-                alt="Students collaborating on campus with laptops"
-                className="gov-hero-student-photo"
-                onError={(e) => {
-                  // Fallback to stylized SVG card if image file is not found
-                  e.currentTarget.style.display = 'none';
-                  e.currentTarget.nextSibling.style.display = 'flex';
-                }}
-              />
-              <div className="gov-hero-img-fallback" style={{ display: 'none' }}>
-                <svg viewBox="0 0 100 80" className="gov-fallback-svg">
-                  <rect width="100" height="80" fill="#e2e8f0" rx="8" />
-                  <circle cx="50" cy="30" r="14" fill="#0b2545" />
-                  <path d="M25 65 C25 45 75 45 75 65" fill="#1769AA" />
-                </svg>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 
-      {/* 2. "How It Helps Institutions" Section */}
+      {/* 2. "How It Helps Institutions" Section (Clean government feature cards) */}
       <section className="gov-how-it-helps-section" aria-labelledby="how-it-helps-heading" id="workflow">
         <div className="gov-section-header">
           <h2 id="how-it-helps-heading" className="gov-section-main-heading">
             {getTranslation('howItHelpsTitle', lang)}
           </h2>
-          <p className="gov-section-sub-heading">
-            {getTranslation('howItHelpsSub', lang)}
-          </p>
         </div>
 
         <div className="gov-helps-content-layout">
           {/* Left: 6 Feature Cards Grid (2 cols x 3 rows) */}
           <div className="gov-features-grid-left">
             {/* 1. Data Submission & Validation */}
-            <div className="gov-feature-card" onClick={onGoLogin} role="button" tabIndex={0}>
+            <div
+              className="gov-feature-card"
+              onClick={() => handleBoxClick('workflow')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && handleBoxClick('workflow')}
+              title="Click to view Workflow details"
+            >
               <div className="gov-card-icon-bubble bubble-blue" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="gov-card-svg">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -113,7 +114,14 @@ export default function LandingPage({ onGoLogin, onGoRegister, lang = 'en' }) {
             </div>
 
             {/* 2. Intake Compliance */}
-            <div className="gov-feature-card" onClick={onGoLogin} role="button" tabIndex={0}>
+            <div
+              className="gov-feature-card"
+              onClick={() => handleBoxClick('workflow')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && handleBoxClick('workflow')}
+              title="Click to view Intake Compliance"
+            >
               <div className="gov-card-icon-bubble bubble-green" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="gov-card-svg">
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -127,7 +135,14 @@ export default function LandingPage({ onGoLogin, onGoRegister, lang = 'en' }) {
             </div>
 
             {/* 3. Duplicate Record Review */}
-            <div className="gov-feature-card" onClick={onGoLogin} role="button" tabIndex={0}>
+            <div
+              className="gov-feature-card"
+              onClick={() => handleBoxClick('workflow')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && handleBoxClick('workflow')}
+              title="Click to view Duplicate Record Review"
+            >
               <div className="gov-card-icon-bubble bubble-purple" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="gov-card-svg">
                   <circle cx="11" cy="11" r="8" />
@@ -143,7 +158,14 @@ export default function LandingPage({ onGoLogin, onGoRegister, lang = 'en' }) {
             </div>
 
             {/* 4. Student Transfers */}
-            <div className="gov-feature-card" onClick={onGoLogin} role="button" tabIndex={0}>
+            <div
+              className="gov-feature-card"
+              onClick={() => handleBoxClick('workflow')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && handleBoxClick('workflow')}
+              title="Click to view Student Transfers"
+            >
               <div className="gov-card-icon-bubble bubble-orange" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="gov-card-svg">
                   <polyline points="17 1 21 5 17 9" />
@@ -159,7 +181,14 @@ export default function LandingPage({ onGoLogin, onGoRegister, lang = 'en' }) {
             </div>
 
             {/* 5. Authorized Verification */}
-            <div className="gov-feature-card" onClick={onGoLogin} role="button" tabIndex={0}>
+            <div
+              className="gov-feature-card"
+              onClick={() => handleBoxClick('workflow')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && handleBoxClick('workflow')}
+              title="Click to view Authorized Verification"
+            >
               <div className="gov-card-icon-bubble bubble-teal" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="gov-card-svg">
                   <circle cx="12" cy="8" r="7" />
@@ -174,7 +203,14 @@ export default function LandingPage({ onGoLogin, onGoRegister, lang = 'en' }) {
             </div>
 
             {/* 6. Reports & Monitoring */}
-            <div className="gov-feature-card" onClick={onGoLogin} role="button" tabIndex={0}>
+            <div
+              className="gov-feature-card"
+              onClick={() => handleBoxClick('workflow')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && handleBoxClick('workflow')}
+              title="Click to view Reports & Monitoring"
+            >
               <div className="gov-card-icon-bubble bubble-blue-alt" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="gov-card-svg">
                   <line x1="18" y1="20" x2="18" y2="10" />
@@ -190,7 +226,7 @@ export default function LandingPage({ onGoLogin, onGoRegister, lang = 'en' }) {
             </div>
           </div>
 
-          {/* Right: Spotlight Container */}
+          {/* Right: Spotlight Container ("For AICTE-Approved Technical Institutions") */}
           <div className="gov-spotlight-right-box" id="about">
             <div className="gov-spotlight-inner">
               <div className="gov-spotlight-icon" aria-hidden="true">
@@ -205,7 +241,7 @@ export default function LandingPage({ onGoLogin, onGoRegister, lang = 'en' }) {
               <button
                 type="button"
                 className="gov-spotlight-btn"
-                onClick={handleRegisterClick}
+                onClick={() => handleBoxClick('about')}
               >
                 <span>{getTranslation('knowMoreBtn', lang)}</span>
               </button>
@@ -223,7 +259,7 @@ export default function LandingPage({ onGoLogin, onGoRegister, lang = 'en' }) {
 
           <div className="gov-stakeholders-items">
             {/* Stakeholder 1: Ministry of Education */}
-            <div className="gov-stakeholder-item">
+            <div className="gov-stakeholder-item" onClick={() => handleBoxClick('stakeholders')} role="button" tabIndex={0}>
               <img
                 src="/assets/stakeholder-moe.png"
                 alt="Ministry of Education Government of India"
@@ -234,7 +270,7 @@ export default function LandingPage({ onGoLogin, onGoRegister, lang = 'en' }) {
             <div className="gov-stakeholder-divider" aria-hidden="true" />
 
             {/* Stakeholder 2: AICTE */}
-            <div className="gov-stakeholder-item">
+            <div className="gov-stakeholder-item" onClick={() => handleBoxClick('stakeholders')} role="button" tabIndex={0}>
               <img
                 src="/assets/stakeholder-aicte.png"
                 alt="All India Council for Technical Education"
@@ -245,7 +281,7 @@ export default function LandingPage({ onGoLogin, onGoRegister, lang = 'en' }) {
             <div className="gov-stakeholder-divider" aria-hidden="true" />
 
             {/* Stakeholder 3: MoE's Innovation Cell */}
-            <div className="gov-stakeholder-item">
+            <div className="gov-stakeholder-item" onClick={() => handleBoxClick('stakeholders')} role="button" tabIndex={0}>
               <img
                 src="/assets/stakeholder-mic.png"
                 alt="MoE's Innovation Cell Government of India"
@@ -256,7 +292,7 @@ export default function LandingPage({ onGoLogin, onGoRegister, lang = 'en' }) {
             <div className="gov-stakeholder-divider" aria-hidden="true" />
 
             {/* Stakeholder 4: National Informatics Centre */}
-            <div className="gov-stakeholder-item">
+            <div className="gov-stakeholder-item" onClick={() => handleBoxClick('stakeholders')} role="button" tabIndex={0}>
               <img
                 src="/assets/stakeholder-nic.png"
                 alt="National Informatics Centre"

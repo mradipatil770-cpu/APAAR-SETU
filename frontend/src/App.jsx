@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import GovernmentHeader from './components/GovernmentHeader';
 import GovernmentFooter from './components/GovernmentFooter';
 import LandingPage from './pages/LandingPage';
+import InformationPage from './pages/InformationPage';
 import LoginPage from './pages/LoginPage';
 import CentralAicteDashboard from './pages/CentralAicteDashboard';
 import OverviewPage from './pages/OverviewPage';
@@ -16,7 +17,9 @@ import { getTranslation } from './i18n/translations';
 
 export default function App() {
   // Navigation & View state
-  const [currentView, setCurrentView] = useState('landing'); // 'landing' | 'login' | 'dashboard'
+  const [currentView, setCurrentView] = useState('landing'); // 'landing' | 'info' | 'login' | 'dashboard'
+  const [infoCategory, setInfoCategory] = useState('about');
+  const [infoSubCategory, setInfoSubCategory] = useState(null);
   const [loginInitialTab, setLoginInitialTab] = useState('login');
   const [activeNav, setActiveNav] = useState('home');
   const [currentUser, setCurrentUser] = useState(null);
@@ -159,20 +162,16 @@ export default function App() {
           setCurrentView('landing');
         }}
         activeNav={activeNav}
-        onNavClick={(item) => {
+        onNavClick={(item, subItem) => {
           setActiveNav(item);
-          if (currentView !== 'landing') {
-            setCurrentView('landing');
-          }
           if (item === 'home') {
+            setCurrentView('landing');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           } else {
-            setTimeout(() => {
-              const el = document.getElementById(item);
-              if (el) {
-                el.scrollIntoView({ behavior: 'smooth' });
-              }
-            }, 50);
+            setInfoCategory(item);
+            setInfoSubCategory(subItem);
+            setCurrentView('info');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
           }
         }}
         lang={lang}
@@ -184,6 +183,34 @@ export default function App() {
         {/* PUBLIC LANDING VIEW */}
         {currentView === 'landing' && (
           <LandingPage
+            onGoLogin={() => {
+              setLoginInitialTab('login');
+              setCurrentView('login');
+            }}
+            onGoRegister={() => {
+              setLoginInitialTab('register');
+              setCurrentView('login');
+            }}
+            onNavigatePage={(pageKey) => {
+              setActiveNav(pageKey);
+              setInfoCategory(pageKey);
+              setInfoSubCategory(null);
+              setCurrentView('info');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            lang={lang}
+          />
+        )}
+
+        {/* DEDICATED INFORMATION PAGES (About, Workflow, Stakeholders, Help/FAQ, News) */}
+        {currentView === 'info' && (
+          <InformationPage
+            category={infoCategory}
+            subCategory={infoSubCategory}
+            onGoHome={() => {
+              setActiveNav('home');
+              setCurrentView('landing');
+            }}
             onGoLogin={() => {
               setLoginInitialTab('login');
               setCurrentView('login');
@@ -469,6 +496,7 @@ export default function App() {
                         loading={loadingDashboard}
                         onSelectUpload={handleSelectUpload}
                         onNavigateUpload={() => handleNavigate('upload')}
+                        onNavigateTab={handleNavigate}
                         currentUser={currentUser}
                         lang={lang}
                       />

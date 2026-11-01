@@ -83,10 +83,10 @@ export default function GovernmentFooter({ onNavigate, lang = 'en' }) {
         {/* Right: Copyright & Last Updated */}
         <div className="gov-footer-right-copy">
           <div className="gov-copy-text">
-            © 2025 APAARSetu. {getTranslation('allRightsReserved', lang)}
+            © 2026 APAARSetu. {getTranslation('allRightsReserved', lang)}
           </div>
           <div className="gov-updated-text">
-            {getTranslation('lastUpdated', lang)}: {getTranslation('lastUpdatedDate', lang)}
+            {getTranslation('lastUpdated', lang)}: 25 oct 2026
           </div>
         </div>
       </div>

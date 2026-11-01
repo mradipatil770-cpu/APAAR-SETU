@@ -20,7 +20,6 @@ export default function LoginPage({ onLoginSuccess, onCancel, lang = 'en', initi
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
-  const [showDemoDrawer, setShowDemoDrawer] = useState(false);
 
   // Register form state
   const [regName, setRegName] = useState('');
@@ -37,42 +36,19 @@ export default function LoginPage({ onLoginSuccess, onCancel, lang = 'en', initi
 
   // Forgot password state
   const [forgotEmail, setForgotEmail] = useState('');
+  const [showDemoDrawer, setShowDemoDrawer] = useState(true);
 
   // Pre-configured demonstration personas for SIH evaluation
   const demoPersonas = [
-    {
-      label: 'Central AICTE Director',
-      role: 'AICTE_ADMIN',
-      email: 'aicte_director@aicte-india.org.synthetic',
-      description: 'National regulatory oversight, institution approvals, and national quota tracking.',
-    },
-    {
-      label: 'AICTE Regulatory Analyst',
-      role: 'AICTE_ANALYST',
-      email: 'analyst@aicte-india.org.synthetic',
-      description: 'Cross-institution duplicate candidate triage and collision analysis.',
-    },
-    {
-      label: 'Central Compliance Auditor',
-      role: 'AUDITOR',
-      email: 'auditor@aicte-india.org.synthetic',
-      description: 'Read-only regulatory compliance inspection and national audit reports.',
-    },
-    {
-      label: 'Institutional Registrar (Delhi Tech — Active)',
-      role: 'INSTITUTE_ADMIN',
-      email: 'demo_admin@delhi-tech.edu.synthetic',
-      description: 'Batch student CSV upload, anomaly resolution, and academic verification ledger.',
-    },
-    {
-      label: 'SV Regional Institute (Pending Verification)',
-      role: 'INSTITUTE_ADMIN',
-      email: 'principal@svrit-nagpur.ac.in.synthetic',
-      description: 'Demonstrates non-privileged isolation: Upload restricted until AICTE Central approval.',
-    },
+    { label: 'Central AICTE Director', email: 'aicte_director@aicte-india.org.synthetic', icon: '🏛️' },
+    { label: 'AICTE Regulatory Analyst', email: 'analyst@aicte-india.org.synthetic', icon: '📊' },
+    { label: 'Central Compliance Auditor', email: 'auditor@aicte-india.org.synthetic', icon: '⚖️' },
+    { label: 'Institutional Registrar (Delhi Tech)', email: 'demo_admin@delhi-tech.edu.synthetic', icon: '🎓' },
+    { label: 'SV Regional Institute (Pending)', email: 'principal@svrit-nagpur.ac.in.synthetic', icon: '⏳' },
   ];
 
   const handlePopulateEmail = (demoEmail) => {
+    setActiveTab('login');
     setEmail(demoEmail);
     setPassword('demo_password_2026');
     setCaptchaInput(captchaCode.replace(/\s+/g, ''));
@@ -546,45 +522,28 @@ export default function LoginPage({ onLoginSuccess, onCancel, lang = 'en', initi
           </div>
         )}
 
-        {/* Collapsible Demo Personas Drawer for Evaluators */}
-        <div className="gov-demo-helper-section">
-          <button
-            type="button"
-            className="gov-demo-helper-toggle"
-            onClick={() => setShowDemoDrawer(!showDemoDrawer)}
-            aria-expanded={showDemoDrawer}
-          >
-            <span>{getTranslation('demoGuidanceTitle', lang)}</span>
-            <span className="gov-toggle-caret">{showDemoDrawer ? '▲' : '▼'}</span>
-          </button>
-
-          {showDemoDrawer && (
-            <div className="gov-demo-helper-drawer">
-              <p className="gov-demo-helper-intro">
-                {getTranslation('demoQuickFill', lang)}
-              </p>
-              <div className="gov-demo-persona-list">
-                {demoPersonas.map((persona) => (
-                  <div
-                    key={persona.email}
-                    className="gov-demo-persona-item"
-                    onClick={() => handlePopulateEmail(persona.email)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => e.key === 'Enter' && handlePopulateEmail(persona.email)}
-                    title="Click to populate credentials"
-                  >
-                    <div className="gov-persona-header">
-                      <strong className="gov-persona-label">{persona.label}</strong>
-                      <span className="gov-persona-badge">{persona.role}</span>
-                    </div>
-                    <div className="gov-persona-email mono">{persona.email}</div>
-                    <div className="gov-persona-desc">{persona.description}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+        {/* Quick Demo Access Bar for SIH Evaluation (Clean Government Chip Style) */}
+        <div className="gov-eval-role-section">
+          <div className="gov-eval-role-header">
+            <span className="gov-eval-badge-icon">⚡</span>
+            <span className="gov-eval-title">
+              {lang === 'hi' ? 'मूल्यांकनासाठी डेमो भूमिका (Quick Role Select):' : 'Demo Access for SIH Evaluation (Select Role):'}
+            </span>
+          </div>
+          <div className="gov-eval-role-chips">
+            {demoPersonas.map((persona) => (
+              <button
+                key={persona.email}
+                type="button"
+                className={`gov-eval-role-btn ${email === persona.email ? 'active-role' : ''}`}
+                onClick={() => handlePopulateEmail(persona.email)}
+                title={`Click to fill credentials for ${persona.label}`}
+              >
+                <span className="role-btn-icon" aria-hidden="true">{persona.icon}</span>
+                <span className="role-btn-label">{persona.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>

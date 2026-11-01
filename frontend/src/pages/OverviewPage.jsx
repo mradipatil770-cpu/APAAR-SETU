@@ -6,12 +6,21 @@ export default function OverviewPage({
   loading,
   onSelectUpload,
   onNavigateUpload,
+  onNavigateTab,
   currentUser,
   lang = 'en',
 }) {
   const [selectedYear, setSelectedYear] = useState('2026-27');
   const [selectedProgramme, setSelectedProgramme] = useState('B.Tech CSE');
   const isPending = currentUser?.institution_status === 'PENDING_VERIFICATION';
+
+  const navigateTo = (tab) => {
+    if (onNavigateTab) {
+      onNavigateTab(tab);
+    } else if (tab === 'upload' && onNavigateUpload) {
+      onNavigateUpload();
+    }
+  };
 
   if (loading) {
     return (
@@ -33,133 +42,205 @@ export default function OverviewPage({
     );
   }
 
-  // Calculate stats based on real database records
-  const totalStudents = dashboardData.total_accepted_records || dashboardData.total_processed_records || 1240;
-  const validatedStudents = dashboardData.total_accepted_records || 1210;
-  const pendingIssues = (dashboardData.open_anomaly_count ?? 0) + (dashboardData.intake_discrepancy_count ?? 0) || 30;
-  const nocPending = 0;
+  // Calculate genuine stats based on real database records (0 by default)
+  const totalStudents = dashboardData.total_accepted_records ?? dashboardData.total_processed_records ?? 0;
+  const validatedStudents = dashboardData.total_accepted_records ?? 0;
+  const pendingIssues = (dashboardData.open_anomaly_count ?? 0) + (dashboardData.intake_discrepancy_count ?? 0);
+  const criticalAnomalies = dashboardData.open_anomaly_count ?? 0;
 
-  // Validation Status rows (Reference Image 1)
+  // Validation Status rows reflecting genuine state
   const validationItems = [
-    { label: getTranslation('valInstProfile', lang), status: getTranslation('statusComplete', lang), type: 'complete' },
-    { label: getTranslation('valIntake', lang), status: getTranslation('statusApproved', lang), type: 'complete' },
-    { label: getTranslation('valDataUpload', lang), status: getTranslation('statusActionRequired', lang), type: 'warning' },
-    { label: getTranslation('valDuplicate', lang), status: getTranslation('statusComplete', lang), type: 'complete' },
-    { label: getTranslation('valTransfer', lang), status: lang === 'hi' ? '२ प्रलंबित' : '2 Pending', type: 'pending' },
-  ];
-
-  // Recent Activity items (Reference Image 1)
-  const recentActivities = [
-    { title: lang === 'hi' ? '१२० विद्यार्थी नोंदी अपलोड केल्या' : '120 student records uploaded', time: lang === 'hi' ? '२ तासांपूर्वी' : '2 hours ago', icon: '📥' },
-    { title: lang === 'hi' ? '३ डुप्लिकेट रेकॉर्ड आढळले' : '3 duplicate records flagged', time: lang === 'hi' ? '३ तासांपूर्वी' : '3 hours ago', icon: '⚠️' },
-    { title: lang === 'hi' ? '२ हस्तांतरण विनंत्या प्रलंबित' : '2 transfer requests pending', time: lang === 'hi' ? '५ तासांपूर्वी' : '5 hours ago', icon: '👥' },
-    { title: lang === 'hi' ? 'प्रवेश पडताळणी पूर्ण' : 'Intake quota verification completed', time: lang === 'hi' ? '१ दिवसापूर्वी' : '1 day ago', icon: '✓' },
-    { title: lang === 'hi' ? 'NOC विनंती सादर केली' : 'NOC transfer request submitted', time: lang === 'hi' ? '१ दिवसापूर्वी' : '1 day ago', icon: '📄' },
-  ];
-
-  // Duplicate candidates sample matching Image 1
-  const duplicateCandidates = [
-    { name: lang === 'hi' ? 'राहुल पाटील' : 'Rahul Patil', apaarId: '123456789012', college: lang === 'hi' ? 'कॉलेज A' : 'College A', status: 'सक्रिय' },
-    { name: lang === 'hi' ? 'राहुल पाटील' : 'Rahul Patil', apaarId: '123456789012', college: lang === 'hi' ? 'कॉलेज B' : 'College B', status: 'सक्रिय' },
-    { name: lang === 'hi' ? 'प्रिया शिंदे' : 'Priya Shinde', apaarId: '456789012345', college: lang === 'hi' ? 'कॉलेज A' : 'College A', status: 'सक्रिय' },
-    { name: lang === 'hi' ? 'प्रिया शिंदे' : 'Priya Shinde', apaarId: '456789012345', college: lang === 'hi' ? 'कॉलेज C' : 'College C', status: 'सक्रिय' },
+    { label: getTranslation('valInstProfile', lang), status: isPending ? (lang === 'hi' ? 'प्रलंबित' : 'Pending') : getTranslation('statusComplete', lang), type: isPending ? 'warning' : 'complete' },
+    { label: getTranslation('valIntake', lang), status: totalStudents > 0 ? getTranslation('statusComplete', lang) : (lang === 'hi' ? 'डेटा नाही (0)' : 'No Records (0)'), type: totalStudents > 0 ? 'complete' : 'pending' },
+    { label: getTranslation('valDataUpload', lang), status: totalStudents > 0 ? getTranslation('statusComplete', lang) : (lang === 'hi' ? 'अपलोड आवश्यक' : 'Upload Required'), type: totalStudents > 0 ? 'complete' : 'warning' },
+    { label: getTranslation('valDuplicate', lang), status: pendingIssues > 0 ? (lang === 'hi' ? `${pendingIssues} पुनरावलोकन` : `${pendingIssues} Issues`) : getTranslation('statusComplete', lang), type: pendingIssues > 0 ? 'warning' : 'complete' },
+    { label: getTranslation('valTransfer', lang), status: lang === 'hi' ? '० प्रलंबित' : '0 Pending', type: 'complete' },
   ];
 
   return (
     <div className="gov-inst-overview">
-      {/* 1. Welcome Banner matching Reference Image 1 */}
-      <section className="gov-welcome-banner">
-        <div className="welcome-banner-left">
-          <h1 className="welcome-banner-title">
-            {getTranslation('welcomeInstitution', lang)}, {dashboardData.institution_name}
+      {/* 1. Welcome Card (Reference Image 2: Cyber Rakshak Style) */}
+      <section className="gov-dashboard-welcome-card">
+        <div className="welcome-card-left">
+          <h1 className="welcome-card-title">
+            {lang === 'hi' ? 'स्वागत आहे' : 'Welcome'}, {dashboardData.institution_name || currentUser?.institution_name || 'Institutional Administrator'}
           </h1>
-          <p className="welcome-banner-subtitle">
-            {getTranslation('dashboardSubtitle', lang)}
+          <p className="welcome-card-subtitle">
+            {lang === 'hi'
+              ? 'आपल्या विद्यार्थी नोंदी, प्रवेश क्षमता आणि सत्यापन स्थितीचे रिअल-टाइम निरीक्षण करा.'
+              : 'Monitor your student records, intake compliance and verification status in real time.'}
           </p>
         </div>
 
-        <div className="welcome-banner-right">
+        <div className="welcome-card-right">
           <div className="academic-year-select-wrap">
-            <label htmlFor="academic-year-select" className="sr-only">{getTranslation('academicYear', lang)}</label>
             <select
               id="academic-year-select"
               className="academic-year-select"
               value={selectedYear}
               onChange={(e) => setSelectedYear(e.target.value)}
             >
-              <option value="2026-27">शैक्षणिक वर्ष 2026 - 27</option>
-              <option value="2025-26">शैक्षणिक वर्ष 2025 - 26</option>
+              <option value="2026-27">AY 2026 - 27</option>
+              <option value="2025-26">AY 2025 - 26</option>
             </select>
           </div>
-          <span className="gov-pill-active">
+          <span className={`gov-status-pill ${isPending ? 'pending' : 'active'}`}>
             <span className="pill-dot">●</span>
-            <span>{isPending ? 'प्रलंबित' : (lang === 'hi' ? 'सक्रिय' : 'Active')}</span>
+            <span>{isPending ? (lang === 'hi' ? 'प्रलंबित' : 'Pending Verification') : (lang === 'hi' ? 'सक्रिय' : 'Active')}</span>
           </span>
         </div>
       </section>
 
-      {/* 2. Four Summary Metric Cards matching Reference Image 1 */}
-      <section className="gov-four-metrics-grid" aria-label="Key Enrolment Metrics">
-        {/* Metric 1: Total Students */}
-        <article className="gov-metric-card border-blue">
-          <div className="metric-icon-wrap blue-bg">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-            </svg>
+      {/* 2. Four Metric Cards Row (Reference Image 2) */}
+      <section className="gov-modern-metrics-grid" aria-label="Key Enrolment Metrics">
+        {/* Metric 1: Total Records */}
+        <article className="gov-modern-metric-card" onClick={() => navigateTo('upload')} role="button" tabIndex={0}>
+          <div className="metric-info-col">
+            <span className="metric-header-title">{getTranslation('statTotalStudents', lang)}</span>
+            <div className="metric-giant-number">{totalStudents.toLocaleString()}</div>
           </div>
-          <div className="metric-text-group">
-            <div className="metric-number">{totalStudents.toLocaleString()}</div>
-            <div className="metric-label">{getTranslation('statTotalStudents', lang)}</div>
+          <div className="metric-badge-icon badge-blue" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="badge-svg">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+            </svg>
           </div>
         </article>
 
-        {/* Metric 2: Validated Students */}
-        <article className="gov-metric-card border-green">
-          <div className="metric-icon-wrap green-bg">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-              <polyline points="22 4 12 14.01 9 11.01" />
-            </svg>
+        {/* Metric 2: Pending Review */}
+        <article className="gov-modern-metric-card" onClick={() => navigateTo('anomalies')} role="button" tabIndex={0}>
+          <div className="metric-info-col">
+            <span className="metric-header-title">{getTranslation('statPendingIssues', lang)}</span>
+            <div className="metric-giant-number">{pendingIssues.toLocaleString()}</div>
           </div>
-          <div className="metric-text-group">
-            <div className="metric-number text-green">{validatedStudents.toLocaleString()}</div>
-            <div className="metric-label">{getTranslation('statValidatedStudents', lang)}</div>
-          </div>
-        </article>
-
-        {/* Metric 3: Pending / Issues */}
-        <article className="gov-metric-card border-orange">
-          <div className="metric-icon-wrap orange-bg">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <div className="metric-badge-icon badge-amber" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="badge-svg">
               <circle cx="12" cy="12" r="10" />
               <polyline points="12 6 12 12 16 14" />
             </svg>
           </div>
-          <div className="metric-text-group">
-            <div className="metric-number text-orange">{pendingIssues}</div>
-            <div className="metric-label">{getTranslation('statPendingIssues', lang)}</div>
+        </article>
+
+        {/* Metric 3: Resolved / Validated */}
+        <article className="gov-modern-metric-card" onClick={() => navigateTo('verifications')} role="button" tabIndex={0}>
+          <div className="metric-info-col">
+            <span className="metric-header-title">{getTranslation('statValidatedStudents', lang)}</span>
+            <div className="metric-giant-number text-green">{validatedStudents.toLocaleString()}</div>
+          </div>
+          <div className="metric-badge-icon badge-green" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="badge-svg">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
           </div>
         </article>
 
-        {/* Metric 4: NOC Pending */}
-        <article className="gov-metric-card border-purple">
-          <div className="metric-icon-wrap purple-bg">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-            </svg>
+        {/* Metric 4: Critical / Anomalies */}
+        <article className="gov-modern-metric-card" onClick={() => navigateTo('anomalies')} role="button" tabIndex={0}>
+          <div className="metric-info-col">
+            <span className="metric-header-title">{lang === 'hi' ? 'गंभीर त्रुटी / समस्या' : 'Critical / Anomalies'}</span>
+            <div className="metric-giant-number text-red">{criticalAnomalies.toLocaleString()}</div>
           </div>
-          <div className="metric-text-group">
-            <div className="metric-number text-purple">{nocPending}</div>
-            <div className="metric-label">{getTranslation('statNocPending', lang)}</div>
+          <div className="metric-badge-icon badge-red" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="badge-svg">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
           </div>
         </article>
       </section>
 
-      {/* 3. Middle Section: Validation Status & Recent Activity (Reference Image 1) */}
+      {/* 3. Quick Actions Section (Reference Image 2: Cyber Rakshak Style) */}
+      <section className="gov-quick-actions-section" aria-label="Quick Actions">
+        <div className="quick-actions-header">
+          <h2 className="quick-actions-title">{lang === 'hi' ? 'त्वरित कृती (Quick Actions)' : 'Quick Actions'}</h2>
+          <p className="quick-actions-subtitle">
+            {lang === 'hi'
+              ? 'विद्यार्थी डेटा अपलोड करणे, पडताळणी ट्रॅक करणे किंवा त्रुटींचे निवारण करण्यासाठी सेवा निवडा.'
+              : 'Select a service to upload records, track verification status, or resolve anomalies.'}
+          </p>
+        </div>
+
+        <div className="gov-quick-actions-grid">
+          {/* Action 1: Upload Records */}
+          <div
+            className="gov-quick-action-card"
+            onClick={() => navigateTo('upload')}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === 'Enter' && navigateTo('upload')}
+          >
+            <div className="quick-action-icon text-blue">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="12" y1="18" x2="12" y2="12" />
+                <line x1="9" y1="15" x2="12" y2="12" />
+                <line x1="15" y1="15" x2="12" y2="12" />
+              </svg>
+            </div>
+            <h3 className="quick-action-label">{lang === 'hi' ? 'विद्यार्थी डेटा अपलोड' : 'Upload Student Data'}</h3>
+          </div>
+
+          {/* Action 2: Verification Tracking */}
+          <div
+            className="gov-quick-action-card"
+            onClick={() => navigateTo('verifications')}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === 'Enter' && navigateTo('verifications')}
+          >
+            <div className="quick-action-icon text-green">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 14 14" />
+              </svg>
+            </div>
+            <h3 className="quick-action-label">{lang === 'hi' ? 'सत्यापन ट्रॅकिंग' : 'Verification Tracker'}</h3>
+          </div>
+
+          {/* Action 3: Anomaly Resolution */}
+          <div
+            className="gov-quick-action-card"
+            onClick={() => navigateTo('anomalies')}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === 'Enter' && navigateTo('anomalies')}
+          >
+            <div className="quick-action-icon text-teal">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            </div>
+            <h3 className="quick-action-label">{lang === 'hi' ? 'त्रुटी व डुप्लिकेट निवारण' : 'Anomaly & Collision Review'}</h3>
+          </div>
+
+          {/* Action 4: Transfer NOC */}
+          <div
+            className="gov-quick-action-card"
+            onClick={() => navigateTo('transfers')}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === 'Enter' && navigateTo('transfers')}
+          >
+            <div className="quick-action-icon text-orange">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="17 1 21 5 17 9" />
+                <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+                <polyline points="7 23 3 19 7 15" />
+                <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+              </svg>
+            </div>
+            <h3 className="quick-action-label">{lang === 'hi' ? 'विद्यार्थी हस्तांतरण (NOC)' : 'Student Transfers & NOC'}</h3>
+          </div>
+        </div>
+      </section>
+
+      {/* 4. Validation Status & Quick Upload Panel */}
       <section className="gov-two-col-grid" aria-label="Status and Tasks">
         {/* Left Card: Validation Status */}
         <article className="gov-sub-panel">
@@ -179,7 +260,7 @@ export default function OverviewPage({
                     <span className="val-badge badge-warning">⚠️ {item.status}</span>
                   )}
                   {item.type === 'pending' && (
-                    <span className="val-badge badge-blue">👥 {item.status}</span>
+                    <span className="val-badge badge-blue">ℹ️ {item.status}</span>
                   )}
                 </div>
               </div>
@@ -187,35 +268,7 @@ export default function OverviewPage({
           </div>
         </article>
 
-        {/* Right Card: Recent Activities */}
-        <article className="gov-sub-panel">
-          <div className="sub-panel-header-row">
-            <h2 className="sub-panel-title">{getTranslation('sectionRecentActivity', lang)}</h2>
-            <button
-              type="button"
-              className="view-all-link-btn"
-              onClick={onNavigateUpload}
-            >
-              {getTranslation('viewAll', lang)}
-            </button>
-          </div>
-          <div className="activity-list">
-            {recentActivities.map((act, idx) => (
-              <div key={idx} className="activity-item-row">
-                <div className="activity-item-left">
-                  <span className="act-icon">{act.icon}</span>
-                  <span className="act-title">{act.title}</span>
-                </div>
-                <span className="act-time">{act.time}</span>
-              </div>
-            ))}
-          </div>
-        </article>
-      </section>
-
-      {/* 4. Lower Interactive Components matching Reference Image 1 bottom row */}
-      <section className="gov-bottom-modules-grid" aria-label="Operational Modules">
-        {/* Module 1: Student Data Upload */}
+        {/* Right Card: Quick Batch CSV Upload Dropzone */}
         <article className="gov-sub-panel">
           <div className="panel-heading-with-icon">
             <span className="panel-icon">📤</span>
@@ -246,146 +299,13 @@ export default function OverviewPage({
             </div>
 
             {/* Drag & Drop File Zone */}
-            <div className="dropzone-box" onClick={onNavigateUpload} role="button" tabIndex={0}>
+            <div className="dropzone-box" onClick={() => navigateTo('upload')} role="button" tabIndex={0}>
               <div className="dropzone-cloud-icon">☁️</div>
               <p className="dropzone-text">{getTranslation('dragDropCsv', lang)}</p>
               <button type="button" className="gov-btn-browse">
                 {getTranslation('chooseFileBtn', lang)}
               </button>
               <span className="dropzone-hint">CSV max 10MB • 12-digit APAAR format</span>
-            </div>
-
-            <div className="upload-btn-wrap">
-              <button
-                type="button"
-                className="gov-btn-submit-primary"
-                onClick={onNavigateUpload}
-                disabled={isPending}
-              >
-                {getTranslation('uploadActionBtn', lang)}
-              </button>
-            </div>
-          </div>
-        </article>
-
-        {/* Module 2: Duplicate Review Table */}
-        <article className="gov-sub-panel">
-          <div className="panel-heading-with-icon">
-            <span className="panel-icon">⚖️</span>
-            <h2 className="sub-panel-title">{getTranslation('duplicateTriageTitle', lang)}</h2>
-          </div>
-          <div className="duplicate-alert-banner">
-            <span>⚠️ {lang === 'hi' ? 'संभाव्य डुप्लिकेट आढळले (४ प्रकरणे)' : 'Potential Multi-Enrolment Collision Flags (4 Cases)'}</span>
-          </div>
-          <div className="table-responsive-wrapper">
-            <table className="gov-data-table compact-table">
-              <thead>
-                <tr>
-                  <th>{getTranslation('studentNameCol', lang)}</th>
-                  <th>{getTranslation('apaarIdCol', lang)}</th>
-                  <th>{getTranslation('institutionCol', lang)}</th>
-                  <th>{getTranslation('statusCol', lang)}</th>
-                  <th>{getTranslation('actions', lang)}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {duplicateCandidates.map((cand, idx) => (
-                  <tr key={idx}>
-                    <td>{cand.name}</td>
-                    <td className="mono">{cand.apaarId}</td>
-                    <td>{cand.college}</td>
-                    <td>
-                      <span className="gov-chip gov-chip-active">{cand.status}</span>
-                    </td>
-                    <td>
-                      <button type="button" className="gov-btn-table-action" onClick={onNavigateUpload}>
-                        {getTranslation('reviewAction', lang)}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </article>
-
-        {/* Module 3: Data Quality & Anomaly Triage */}
-        <article className="gov-sub-panel">
-          <div className="panel-heading-with-icon">
-            <span className="panel-icon">📊</span>
-            <h2 className="sub-panel-title">{getTranslation('dataQualityTitle', lang)}</h2>
-          </div>
-          <div className="quality-score-container">
-            <div className="score-gauge-box">
-              <div className="score-percentage-number">98.2%</div>
-              <div className="score-percentage-label">{getTranslation('validRecordsLabel', lang)}</div>
-            </div>
-            <div className="score-breakdown-boxes">
-              <div className="breakdown-stat-box green-border">
-                <div className="breakdown-number text-green">1,210</div>
-                <div className="breakdown-label">{getTranslation('validRecordsLabel', lang)}</div>
-              </div>
-              <div className="breakdown-stat-box orange-border">
-                <div className="breakdown-number text-orange">12</div>
-                <div className="breakdown-label">{getTranslation('missingFieldsLabel', lang)}</div>
-              </div>
-              <div className="breakdown-stat-box red-border">
-                <div className="breakdown-number text-red">4</div>
-                <div className="breakdown-label">{getTranslation('duplicateRecordsLabel', lang)}</div>
-              </div>
-              <div className="breakdown-stat-box purple-border">
-                <div className="breakdown-number text-purple">2</div>
-                <div className="breakdown-label">{getTranslation('suspiciousRecordsLabel', lang)}</div>
-              </div>
-            </div>
-          </div>
-        </article>
-
-        {/* Module 4: 5-Step Student Transfer Progress Stepper */}
-        <article className="gov-sub-panel">
-          <div className="panel-heading-with-icon">
-            <span className="panel-icon">🔄</span>
-            <h2 className="sub-panel-title">{getTranslation('transferTrackerTitle', lang)}</h2>
-          </div>
-          <div className="transfer-stepper-container">
-            <div className="stepper-step complete">
-              <div className="stepper-circle">1</div>
-              <div className="stepper-content">
-                <div className="stepper-title">{getTranslation('transferStep1', lang)}</div>
-                <div className="stepper-meta">10-10-2026</div>
-              </div>
-            </div>
-            <div className="stepper-line active" />
-            <div className="stepper-step active">
-              <div className="stepper-circle">2</div>
-              <div className="stepper-content">
-                <div className="stepper-title">{getTranslation('transferStep2', lang)}</div>
-                <div className="stepper-meta text-orange">प्रलंबित (Pending)</div>
-              </div>
-            </div>
-            <div className="stepper-line" />
-            <div className="stepper-step">
-              <div className="stepper-circle">3</div>
-              <div className="stepper-content">
-                <div className="stepper-title">{getTranslation('transferStep3', lang)}</div>
-                <div className="stepper-meta">प्रलंबित</div>
-              </div>
-            </div>
-            <div className="stepper-line" />
-            <div className="stepper-step">
-              <div className="stepper-circle">4</div>
-              <div className="stepper-content">
-                <div className="stepper-title">{getTranslation('transferStep4', lang)}</div>
-                <div className="stepper-meta">प्रलंबित</div>
-              </div>
-            </div>
-            <div className="stepper-line" />
-            <div className="stepper-step">
-              <div className="stepper-circle">5</div>
-              <div className="stepper-content">
-                <div className="stepper-title">{getTranslation('transferStep5', lang)}</div>
-                <div className="stepper-meta">—</div>
-              </div>
             </div>
           </div>
         </article>

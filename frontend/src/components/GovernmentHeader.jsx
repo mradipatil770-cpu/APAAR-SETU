@@ -13,45 +13,53 @@ export default function GovernmentHeader({
   onToggleLang,
 }) {
   const [fontSizeLevel, setFontSizeLevel] = useState(0); // -1: small, 0: default, 1: large
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleFontChange = (level) => {
     setFontSizeLevel(level);
     const root = document.documentElement;
     if (level === -1) {
-      root.style.fontSize = '14px';
+      root.style.fontSize = '90%';
     } else if (level === 1) {
-      root.style.fontSize = '17px';
+      root.style.fontSize = '110%';
     } else {
-      root.style.fontSize = '15px';
+      root.style.fontSize = '100%';
     }
   };
 
-  const handleNavItemClick = (itemKey) => {
+  const handleNavSelect = (itemKey) => {
+    setMobileMenuOpen(false);
     if (onNavClick) {
-      onNavClick(itemKey);
+      onNavClick(itemKey, null);
     } else if (itemKey === 'home') {
       if (onGoHome) onGoHome();
-    } else {
-      const el = document.getElementById(itemKey);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth' });
-      }
     }
   };
 
+  const navItems = [
+    { key: 'home', label: getTranslation('navHome', lang) },
+    { key: 'about', label: getTranslation('navAboutUs', lang) },
+    { key: 'workflow', label: getTranslation('navWorkflow', lang) },
+    { key: 'stakeholders', label: getTranslation('navStakeholders', lang) },
+    { key: 'help', label: getTranslation('navHelpFaq', lang) },
+  ];
+
   return (
-    <header className="gov-official-header-root" role="banner">
-      {/* 1. Top Utility Strip (Exact dark blue matching reference screenshot) */}
-      <div className="gov-top-bar">
+    <header className="gov-header-unified" role="banner">
+      {/* 1. Indian National Flag Tricolor Accent Line */}
+      <div className="gov-tricolor-strip" aria-hidden="true" />
+
+      {/* 2. Top Utility & Accessibility Bar (AICTE / Indian Gov Portal Standard) */}
+      <div className="gov-top-dark-bar">
         <div className="gov-top-bar-inner">
           <div className="gov-top-bar-left">
-            <span className="gov-hindi-ministry-title">
-              {getTranslation('landingGovIndiaTop', lang)}
+            <span className="gov-gov-text">
+              {lang === 'hi' ? 'भारत सरकार | शिक्षा मंत्रालय' : 'Government of India | Ministry of Education'}
             </span>
           </div>
 
           <div className="gov-top-bar-right">
-            {/* Font size accessibility adjustment */}
+            {/* Font size accessibility controls */}
             <div className="gov-font-size-group" aria-label="Text size options">
               <button
                 type="button"
@@ -81,159 +89,138 @@ export default function GovernmentHeader({
 
             <span className="gov-top-sep" aria-hidden="true">|</span>
 
-            {/* Screen Reader Access link/button */}
+            {/* Screen Reader Access */}
             <button
               type="button"
               className="gov-screen-reader-btn"
-              onClick={() => alert(getTranslation('screenReader', lang) + ': Enabled')}
-              title={getTranslation('screenReader', lang)}
+              onClick={() => alert((lang === 'hi' ? 'स्क्रीन रीडर' : 'Screen Reader') + ': Enabled')}
+              title={lang === 'hi' ? 'स्क्रीन रीडर' : 'Screen Reader'}
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="gov-icon-svg" aria-hidden="true">
-                <circle cx="12" cy="4" r="2" />
-                <path d="M15 8h-6v7m3-4v9" />
-              </svg>
+              <span className="gov-screen-reader-icon" aria-hidden="true">🚹</span>
               <span>{lang === 'hi' ? 'स्क्रीन रीडर' : 'Screen Reader'}</span>
             </button>
 
             <span className="gov-top-sep" aria-hidden="true">|</span>
 
-            {/* Language Switcher English | हिंदी */}
+            {/* Language Switcher Button (English / हिंदी) */}
             <button
               type="button"
-              className="gov-lang-switch-btn"
+              className="gov-lang-badge-btn"
               onClick={onToggleLang}
-              title={lang === 'en' ? 'Switch to हिंदी' : 'Switch to English'}
+              title={lang === 'en' ? 'हिन्दी में देखें' : 'View in English'}
             >
-              <span className={lang === 'en' ? 'lang-active' : 'lang-inactive'}>English</span>
-              <span className="lang-sep">|</span>
-              <span className={lang === 'hi' ? 'lang-active' : 'lang-inactive'}>हिंदी</span>
+              <span>{lang === 'en' ? 'English' : 'English'}</span>
+              <span className="gov-lang-sub-sep">|</span>
+              <span>{lang === 'hi' ? 'हिंदी' : 'हिंदी'}</span>
             </button>
 
-            {/* Globe Icon */}
-            <span className="gov-globe-icon" aria-hidden="true" title="Language selection">
-              🌐
-            </span>
+            <span className="gov-top-sep" aria-hidden="true">|</span>
+            <span className="gov-globe-icon" title="Portal Network" aria-hidden="true">🌐</span>
           </div>
         </div>
       </div>
 
-      {/* 2. Main White Navigation Header */}
-      <div className="gov-main-nav-bar">
+      {/* 3. Main Navigation & Branding Strip (Reference Image 1) */}
+      <div className="gov-main-nav-strip">
         <div className="gov-main-nav-inner">
-          {/* Left Brand with Graduation Cap Logo */}
+          {/* Left: Branding */}
           <div
             className="gov-brand-clickable"
             onClick={onGoHome}
             role="button"
             tabIndex={0}
             onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onGoHome && onGoHome()}
-            title="APAARSetu Home"
+            title="APAARSetu Portal Home"
           >
             <div className="gov-cap-icon-box" aria-hidden="true">
               <svg viewBox="0 0 48 40" fill="none" className="gov-mortarboard-svg">
-                {/* Mortarboard Cap */}
-                <polygon points="24,6 45,16 24,26 3,16" fill="#0b2545" stroke="#071930" strokeWidth="1.5" />
+                <polygon points="24,6 45,16 24,26 3,16" fill="#0B2545" stroke="#071930" strokeWidth="1.5" />
                 <polygon points="24,10 40,16 24,23 8,16" fill="#174A78" />
-                {/* Cap Base */}
-                <path d="M14,21 L14,30 C14,35 34,35 34,30 L34,21" fill="#0b2545" stroke="#071930" strokeWidth="1.5" />
-                {/* Tassel */}
-                <path d="M24,16 C24,20 37,22 38,27 L37,33" stroke="#f26a1b" strokeWidth="2" strokeLinecap="round" />
-                <circle cx="24" cy="16" r="2" fill="#f26a1b" />
-                <rect x="35" y="32" width="4" height="6" rx="1" fill="#f26a1b" />
+                <path d="M14,21 L14,30 C14,35 34,35 34,30 L34,21" fill="#0B2545" stroke="#071930" strokeWidth="1.5" />
+                <path d="M24,16 C24,20 37,22 38,27 L37,33" stroke="#F36B21" strokeWidth="2" strokeLinecap="round" />
+                <circle cx="24" cy="16" r="2" fill="#F36B21" />
+                <rect x="35" y="32" width="4" height="6" rx="1" fill="#F36B21" />
               </svg>
             </div>
 
             <div className="gov-brand-text">
               <div className="gov-brand-title">APAARSetu</div>
               <div className="gov-brand-subtitle">
-                {getTranslation('platformSubtitle', lang)}
+                {lang === 'hi'
+                  ? 'अपार आईडी आधारित विद्यार्थी डेटा व्यवस्थापन व सत्यापन मंच'
+                  : 'APAAR ID-Based Student Data Management & Verification Platform'}
               </div>
             </div>
           </div>
 
-          {/* Center Navigation Links (Exact items from screenshot) */}
-          <nav className="gov-center-nav" aria-label="Main Navigation">
-            <button
-              type="button"
-              className={`gov-nav-link ${activeNav === 'home' ? 'nav-active' : ''}`}
-              onClick={() => handleNavItemClick('home')}
-            >
-              {getTranslation('navHome', lang)}
-            </button>
-            <button
-              type="button"
-              className={`gov-nav-link ${activeNav === 'about' ? 'nav-active' : ''}`}
-              onClick={() => handleNavItemClick('about')}
-            >
-              {getTranslation('navAbout', lang)}
-            </button>
-            <button
-              type="button"
-              className={`gov-nav-link ${activeNav === 'workflow' ? 'nav-active' : ''}`}
-              onClick={() => handleNavItemClick('workflow')}
-            >
-              {getTranslation('navWorkflow', lang)}
-            </button>
-            <button
-              type="button"
-              className={`gov-nav-link ${activeNav === 'stakeholders' ? 'nav-active' : ''}`}
-              onClick={() => handleNavItemClick('stakeholders')}
-            >
-              {getTranslation('navStakeholders', lang)}
-            </button>
-            <button
-              type="button"
-              className={`gov-nav-link ${activeNav === 'help' ? 'nav-active' : ''}`}
-              onClick={() => handleNavItemClick('help')}
-            >
-              {getTranslation('navHelpFaq', lang)}
-            </button>
-          </nav>
+          {/* Right: Navigation Items + Login + Register Buttons */}
+          <div className="gov-nav-and-actions">
+            <nav className={`gov-main-nav-links ${mobileMenuOpen ? 'mobile-open' : ''}`} aria-label="Primary Navigation">
+              <ul className="gov-nav-menu-list">
+                {navItems.map((item) => (
+                  <li key={item.key} className="gov-nav-item">
+                    <button
+                      type="button"
+                      className={`gov-nav-btn ${activeNav === item.key ? 'nav-active' : ''}`}
+                      onClick={() => handleNavSelect(item.key)}
+                    >
+                      {item.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </nav>
 
-          {/* Right Action Buttons */}
-          <div className="gov-right-actions">
-            {!currentUser ? (
-              <div className="gov-auth-btns-row">
-                {/* 1. Login button: White bg, navy border */}
-                <button
-                  type="button"
-                  className="gov-btn-login-outline"
-                  onClick={onSignIn}
-                >
-                  <span className="gov-btn-ico" aria-hidden="true">👤</span>
-                  <span>{getTranslation('btnLogin', lang)}</span>
-                </button>
+            <div className="gov-nav-cta-buttons">
+              {!currentUser ? (
+                <>
+                  <button
+                    type="button"
+                    className="gov-header-login-btn"
+                    onClick={onSignIn}
+                  >
+                    <span className="gov-login-icon" aria-hidden="true">👤</span>
+                    <span>{getTranslation('btnLogin', lang)}</span>
+                  </button>
 
-                {/* 2. Register Institution button: Vibrant orange background */}
-                <button
-                  type="button"
-                  className="gov-btn-register-solid"
-                  onClick={onRegister || onSignIn}
-                >
-                  <span className="gov-btn-ico" aria-hidden="true">🏛️</span>
-                  <span>{getTranslation('btnRegisterInst', lang)}</span>
-                </button>
-              </div>
-            ) : (
-              <div className="gov-header-auth-badge">
-                <div className="gov-auth-meta">
-                  <span className="gov-user-role-tag">
-                    {getTranslation(`role_${currentUser.role}`, lang) || currentUser.role}
-                  </span>
-                  <span className="gov-user-email-tag" title={currentUser.email}>
-                    {currentUser.email}
-                  </span>
+                  <button
+                    type="button"
+                    className="gov-header-register-btn"
+                    onClick={onRegister || onSignIn}
+                  >
+                    <span className="gov-reg-icon" aria-hidden="true">🏛️</span>
+                    <span>{getTranslation('btnRegisterInst', lang)}</span>
+                  </button>
+                </>
+              ) : (
+                <div className="gov-header-user-group">
+                  <div className="gov-auth-chip">
+                    <span className="auth-chip-role">{currentUser.role}</span>
+                    <span className="auth-chip-email">{currentUser.email}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="gov-header-logout-btn"
+                    onClick={onSignOut}
+                  >
+                    {getTranslation('navLogout', lang)}
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  className="gov-btn-header-signout"
-                  onClick={onSignOut}
-                  title="Sign out of active session"
-                >
-                  {getTranslation('navLogout', lang)}
-                </button>
-              </div>
-            )}
+              )}
+
+              {/* Mobile Menu Toggle Button */}
+              <button
+                type="button"
+                className="gov-mobile-hamburger"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                aria-label="Toggle navigation menu"
+                aria-expanded={mobileMenuOpen}
+              >
+                <span className="hamburger-bar" />
+                <span className="hamburger-bar" />
+                <span className="hamburger-bar" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
